@@ -5,38 +5,27 @@ namespace App\Livewire\Products;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('layouts.app')]
 class ProductList extends Component
 {
     public ?int $editingId = null;
-
     public ?int $categoryId = null;
-
     public string $sku = '';
-
     public string $barcode = '';
-
     public string $name = '';
-
     public string $costPrice = '0.00';
-
     public string $sellingPrice = '';
-
     public int $stockQuantity = 0;
-
     public int $lowStockLevel = 5;
-
     public string $status = Product::STATUS_ACTIVE;
-
     public bool $showForm = false;
 
     public function boot(): void
     {
-        abort_unless(
-            auth()->check() && auth()->user()->isActive() && auth()->user()->isAdmin(),
-            403,
-        );
+        abort_unless(auth()->check() && auth()->user()->isActive() && auth()->user()->isAdmin(), 403);
     }
 
     public function create(): void
