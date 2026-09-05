@@ -1,0 +1,19 @@
+{
+  "name": "Simple POS",
+  "short_name": "Simple POS",
+  "description": "Simple point-of-sale system for sales, inventory, and reporting.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#111827",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/simple-pos-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
