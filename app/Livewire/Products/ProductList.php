@@ -109,7 +109,14 @@ class ProductList extends Component
 
     public function delete(int $productId): void
     {
-        Product::query()->findOrFail($productId)->delete();
+        $product = Product::query()->findOrFail($productId);
+
+        if ($product->stockMovements()->exists()) {
+            session()->flash('error', 'This product has inventory history and cannot be deleted. Set it to inactive instead.');
+            return;
+        }
+
+        $product->delete();
 
         if ($this->editingId === $productId) {
             $this->resetForm();
