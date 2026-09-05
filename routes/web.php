@@ -5,6 +5,7 @@ use App\Livewire\Inventory\InventoryList;
 use App\Livewire\Pos\SaleTerminal;
 use App\Livewire\Products\ProductList;
 use App\Livewire\Sales\SalesHistory;
+use App\Livewire\Users\UserManagement;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,7 @@ Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
     Route::get('products', ProductList::class)->name('products');
     Route::get('inventory', InventoryList::class)->name('inventory');
     Route::get('sales', SalesHistory::class)->name('sales');
+    Route::get('users', UserManagement::class)->name('users');
 });
 
 require __DIR__.'/auth.php';
