@@ -27,6 +27,8 @@ class StockMovement extends Model
 
     public const TYPE_ADJUSTMENT = 'adjustment';
 
+    public const TYPE_SALE = 'sale';
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
