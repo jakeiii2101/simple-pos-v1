@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Simple POS icon">
+  <rect width="512" height="512" rx="96" fill="#111827"/>
+  <rect x="96" y="92" width="320" height="328" rx="28" fill="#ffffff"/>
+  <rect x="132" y="128" width="248" height="78" rx="16" fill="#e5e7eb"/>
+  <rect x="132" y="232" width="72" height="72" rx="14" fill="#111827"/>
+  <rect x="220" y="232" width="72" height="72" rx="14" fill="#111827"/>
+  <rect x="308" y="232" width="72" height="72" rx="14" fill="#111827"/>
+  <rect x="132" y="320" width="160" height="64" rx="14" fill="#111827"/>
+  <rect x="308" y="320" width="72" height="64" rx="14" fill="#111827"/>
+</svg>
