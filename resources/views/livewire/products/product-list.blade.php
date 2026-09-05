@@ -23,6 +23,12 @@
                     </div>
                 @endif
 
+                @if (session('error'))
+                    <div class="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 @if ($showForm)
                     <form wire:submit="save" class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-5">
                         <h2 class="text-lg font-medium text-gray-900">{{ $editingId ? 'Edit Product' : 'Add Product' }}</h2>
@@ -80,8 +86,13 @@
 
                             <div>
                                 <x-input-label for="stock-quantity" value="Stock Quantity" />
-                                <x-text-input id="stock-quantity" wire:model="stockQuantity" type="number" min="0" class="mt-1 block w-full" />
-                                <x-input-error :messages="$errors->get('stockQuantity')" class="mt-2" />
+                                @if ($editingId)
+                                    <x-text-input id="stock-quantity" :value="$stockQuantity" type="number" class="mt-1 block w-full bg-gray-100" disabled />
+                                    <p class="mt-1 text-xs text-gray-500">Use Inventory to change stock after product creation.</p>
+                                @else
+                                    <x-text-input id="stock-quantity" wire:model="stockQuantity" type="number" min="0" class="mt-1 block w-full" />
+                                    <x-input-error :messages="$errors->get('stockQuantity')" class="mt-2" />
+                                @endif
                             </div>
 
                             <div>
