@@ -28,6 +28,10 @@ new class extends Component
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
+                    <x-nav-link :href="route('pos', [], false)" :active="request()->routeIs('pos')" wire:navigate>
+                        {{ __('POS') }}
+                    </x-nav-link>
+
                     @if (auth()->user()->isAdmin())
                         <x-nav-link :href="route('categories', [], false)" :active="request()->routeIs('categories')" wire:navigate>
                             {{ __('Categories') }}
@@ -84,6 +88,10 @@ new class extends Component
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard', [], false)" :active="request()->routeIs('dashboard')" wire:navigate>
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('pos', [], false)" :active="request()->routeIs('pos')" wire:navigate>
+                {{ __('POS') }}
             </x-responsive-nav-link>
 
             @if (auth()->user()->isAdmin())
