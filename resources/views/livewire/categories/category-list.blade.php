@@ -23,6 +23,12 @@
                     </div>
                 @endif
 
+                @if (session('error'))
+                    <div class="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 @if ($showForm)
                     <form wire:submit="save" class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-5">
                         <h2 class="text-lg font-medium text-gray-900">
