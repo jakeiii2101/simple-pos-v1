@@ -4,8 +4,10 @@ namespace App\Livewire\Categories;
 
 use App\Models\Category;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('layouts.app')]
 class CategoryList extends Component
 {
     public ?int $editingId = null;
