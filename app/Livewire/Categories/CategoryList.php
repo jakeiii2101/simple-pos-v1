@@ -18,6 +18,14 @@ class CategoryList extends Component
 
     public bool $showForm = false;
 
+    public function boot(): void
+    {
+        abort_unless(
+            auth()->check() && auth()->user()->isActive() && auth()->user()->isAdmin(),
+            403,
+        );
+    }
+
     public function create(): void
     {
         $this->resetForm();
