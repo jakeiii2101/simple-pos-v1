@@ -4,6 +4,7 @@ use App\Livewire\Categories\CategoryList;
 use App\Livewire\Inventory\InventoryList;
 use App\Livewire\Pos\SaleTerminal;
 use App\Livewire\Products\ProductList;
+use App\Livewire\Sales\SalesHistory;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,7 @@ Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
     Route::get('categories', CategoryList::class)->name('categories');
     Route::get('products', ProductList::class)->name('products');
     Route::get('inventory', InventoryList::class)->name('inventory');
+    Route::get('sales', SalesHistory::class)->name('sales');
 });
 
 require __DIR__.'/auth.php';
