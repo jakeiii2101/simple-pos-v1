@@ -11,13 +11,9 @@ use Livewire\Component;
 class CategoryList extends Component
 {
     public ?int $editingId = null;
-
     public string $name = '';
-
     public string $description = '';
-
     public string $status = Category::STATUS_ACTIVE;
-
     public bool $showForm = false;
 
     public function boot(): void
@@ -77,6 +73,12 @@ class CategoryList extends Component
     public function delete(int $categoryId): void
     {
         $category = Category::query()->findOrFail($categoryId);
+
+        if ($category->products()->exists()) {
+            session()->flash('error', 'This category cannot be deleted because it is assigned to one or more products.');
+            return;
+        }
+
         $category->delete();
 
         if ($this->editingId === $categoryId) {
