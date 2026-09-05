@@ -25,8 +25,10 @@ class SaleTerminal extends Component
 
     public function boot(): void
     {
+        $user = auth()->user();
+
         abort_unless(
-            auth()->check() && auth()->user()->isActive(),
+            $user !== null && $user->isActive() && ($user->isAdmin() || $user->isCashier()),
             403,
         );
     }
