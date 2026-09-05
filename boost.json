@@ -1,0 +1,23 @@
+{
+    "agents": [
+        "copilot",
+        "claude_code",
+        "cursor",
+        "codex",
+        "opencode"
+    ],
+    "cloud": true,
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch": false,
+    "sail": false,
+    "skills": [
+        "infer-conventions",
+        "laravel-best-practices",
+        "testing-best-practices",
+        "livewire-development",
+        "volt-development",
+        "tailwindcss-development",
+        "deploying-laravel-cloud"
+    ]
+}
