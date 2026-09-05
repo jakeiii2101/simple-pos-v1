@@ -12,20 +12,33 @@ use Livewire\Component;
 class ProductList extends Component
 {
     public ?int $editingId = null;
+
     public ?int $categoryId = null;
+
     public string $sku = '';
+
     public string $barcode = '';
+
     public string $name = '';
+
     public string $costPrice = '0.00';
+
     public string $sellingPrice = '';
+
     public int $stockQuantity = 0;
+
     public int $lowStockLevel = 5;
+
     public string $status = Product::STATUS_ACTIVE;
+
     public bool $showForm = false;
 
     public function boot(): void
     {
-        abort_unless(auth()->check() && auth()->user()->isActive() && auth()->user()->isAdmin(), 403);
+        abort_unless(
+            auth()->check() && auth()->user()->isActive() && auth()->user()->isAdmin(),
+            403,
+        );
     }
 
     public function create(): void
@@ -54,17 +67,22 @@ class ProductList extends Component
 
     public function save(): void
     {
-        $validated = $this->validate([
+        $rules = [
             'categoryId' => ['required', 'integer', Rule::exists('categories', 'id')->where('status', Category::STATUS_ACTIVE)],
             'sku' => ['required', 'string', 'max:100', Rule::unique('products', 'sku')->ignore($this->editingId)],
             'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->ignore($this->editingId)],
             'name' => ['required', 'string', 'max:150'],
             'costPrice' => ['required', 'numeric', 'min:0'],
             'sellingPrice' => ['required', 'numeric', 'min:0'],
-            'stockQuantity' => ['required', 'integer', 'min:0'],
             'lowStockLevel' => ['required', 'integer', 'min:0'],
             'status' => ['required', Rule::in([Product::STATUS_ACTIVE, Product::STATUS_INACTIVE])],
-        ]);
+        ];
+
+        if ($this->editingId === null) {
+            $rules['stockQuantity'] = ['required', 'integer', 'min:0'];
+        }
+
+        $validated = $this->validate($rules);
 
         $data = [
             'category_id' => $validated['categoryId'],
@@ -73,7 +91,6 @@ class ProductList extends Component
             'name' => trim($validated['name']),
             'cost_price' => $validated['costPrice'],
             'selling_price' => $validated['sellingPrice'],
-            'stock_quantity' => $validated['stockQuantity'],
             'low_stock_level' => $validated['lowStockLevel'],
             'status' => $validated['status'],
         ];
@@ -82,6 +99,7 @@ class ProductList extends Component
             Product::query()->findOrFail($this->editingId)->update($data);
             session()->flash('success', 'Product updated successfully.');
         } else {
+            $data['stock_quantity'] = $validated['stockQuantity'];
             Product::query()->create($data);
             session()->flash('success', 'Product created successfully.');
         }
