@@ -5,15 +5,21 @@
 :root {
     --sniper-navy: #0F2747;
     --sniper-red: #E50914;
+    --sniper-red-dark: #C90812;
     --sniper-slate: #64748B;
     --sniper-light: #F1F5F9;
     --sniper-white: #FFFFFF;
     --sniper-dark: #08111F;
+    --sniper-border: #E2E8F0;
+    --sniper-success: #16A34A;
+    --sniper-warning: #D97706;
 }
 
 @layer base {
+    html { scroll-behavior: smooth; }
+
     body {
-        @apply bg-slate-50 text-slate-900;
+        @apply bg-slate-50 text-slate-900 antialiased;
         font-family: 'Inter', sans-serif;
     }
 
@@ -24,27 +30,47 @@
 
     button,
     [type='button'],
-    [type='submit'] {
+    [type='submit'],
+    a {
         @apply transition-all duration-200;
     }
 
     input,
     select,
     textarea {
-        @apply rounded-lg border-slate-300 focus:border-sniper-red focus:ring-sniper-red/20;
+        @apply rounded-[10px] border-slate-300 bg-white text-sniper-navy placeholder:text-slate-400 focus:border-sniper-red focus:ring-sniper-red/20;
     }
 }
 
 @layer components {
-    .sniper-card {
-        @apply rounded-sniper bg-white shadow-sniper ring-1 ring-slate-200/70;
-    }
+    .sniper-page { @apply mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8; }
+    .sniper-card { @apply rounded-2xl bg-white shadow-sniper ring-1 ring-slate-200/80; }
+    .sniper-card-muted { @apply rounded-2xl bg-slate-50 ring-1 ring-slate-200/70; }
+    .sniper-kicker { @apply text-[11px] font-bold uppercase tracking-[0.22em] text-sniper-red; }
+    .sniper-title { @apply font-heading text-2xl font-bold tracking-[-0.03em] text-sniper-navy sm:text-3xl; }
+    .sniper-copy { @apply text-sm leading-6 text-sniper-slate; }
 
     .sniper-btn-primary {
-        @apply inline-flex items-center justify-center rounded-lg bg-sniper-red px-4 py-2 font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-sniper-red/30 focus:ring-offset-2;
+        @apply inline-flex items-center justify-center rounded-xl bg-sniper-red px-4 py-2.5 font-semibold text-white shadow-[0_10px_24px_rgba(229,9,20,0.20)] hover:-translate-y-0.5 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-sniper-red/30 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
     }
 
     .sniper-btn-secondary {
-        @apply inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 font-semibold text-sniper-navy hover:bg-sniper-light focus:outline-none focus:ring-2 focus:ring-sniper-navy/20 focus:ring-offset-2;
+        @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-sniper-navy hover:bg-sniper-light focus:outline-none focus:ring-2 focus:ring-sniper-navy/20 focus:ring-offset-2;
     }
+
+    .sniper-input { @apply block w-full rounded-[10px] border-slate-300 bg-white text-sniper-navy placeholder:text-slate-400 focus:border-sniper-red focus:ring-sniper-red/20; }
+    .sniper-label { @apply mb-1.5 block text-sm font-medium text-sniper-navy; }
+    .sniper-badge { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold; }
+    .sniper-badge-success { @apply sniper-badge bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200; }
+    .sniper-badge-danger { @apply sniper-badge bg-red-50 text-red-700 ring-1 ring-red-200; }
+    .sniper-badge-neutral { @apply sniper-badge bg-slate-100 text-slate-600 ring-1 ring-slate-200; }
+
+    .sniper-table { @apply min-w-full divide-y divide-slate-200 text-sm; }
+    .sniper-table thead { @apply bg-slate-50; }
+    .sniper-table th { @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500; }
+    .sniper-table td { @apply px-4 py-3 text-slate-700; }
+    .sniper-table tbody { @apply divide-y divide-slate-100 bg-white; }
+    .sniper-table tbody tr { @apply hover:bg-slate-50/80; }
 }
+
+[x-cloak] { display: none !important; }
