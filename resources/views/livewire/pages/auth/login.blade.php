@@ -21,7 +21,9 @@ new #[Layout('layouts.guest')] class extends Component
         Session::regenerate();
         Session::forget('url.intended');
 
-        $this->redirect(route('dashboard', absolute: false), navigate: true);
+        // Keep this redirect relative so the browser remains on the current
+        // Codespaces/public host instead of switching to an internal host.
+        $this->redirect('/dashboard', navigate: true);
     }
 }; ?>
 
