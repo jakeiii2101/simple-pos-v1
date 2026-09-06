@@ -1,7 +1,9 @@
-const CACHE_NAME = 'simple-pos-v1';
+const CACHE_NAME = 'simple-pos-v2';
 const APP_SHELL = [
     '/',
     '/manifest.webmanifest',
+    '/icons/icon-192.png',
+    '/icons/icon-512.png',
     '/icons/simple-pos-icon.svg',
 ];
 
