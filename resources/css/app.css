@@ -44,11 +44,16 @@
 
 @layer components {
     .sniper-page { @apply mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8; }
+    .sniper-page-header { @apply mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between; }
     .sniper-card { @apply rounded-2xl bg-white shadow-sniper ring-1 ring-slate-200/80; }
     .sniper-card-muted { @apply rounded-2xl bg-slate-50 ring-1 ring-slate-200/70; }
+    .sniper-section { @apply overflow-hidden rounded-2xl bg-white shadow-sniper ring-1 ring-slate-200/80; }
+    .sniper-section-header { @apply border-b border-slate-200 px-5 py-4 sm:px-6; }
     .sniper-kicker { @apply text-[11px] font-bold uppercase tracking-[0.22em] text-sniper-red; }
     .sniper-title { @apply font-heading text-2xl font-bold tracking-[-0.03em] text-sniper-navy sm:text-3xl; }
+    .sniper-subtitle { @apply mt-1 text-sm leading-6 text-sniper-slate; }
     .sniper-copy { @apply text-sm leading-6 text-sniper-slate; }
+    .sniper-form-panel { @apply rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6; }
 
     .sniper-btn-primary {
         @apply inline-flex items-center justify-center rounded-xl bg-sniper-red px-4 py-2.5 font-semibold text-white shadow-[0_10px_24px_rgba(229,9,20,0.20)] hover:-translate-y-0.5 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-sniper-red/30 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
@@ -58,19 +63,36 @@
         @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-sniper-navy hover:bg-sniper-light focus:outline-none focus:ring-2 focus:ring-sniper-navy/20 focus:ring-offset-2;
     }
 
+    .sniper-action-link { @apply font-semibold text-sniper-navy hover:text-sniper-red focus:outline-none focus:ring-2 focus:ring-sniper-red/20 focus:ring-offset-2; }
+    .sniper-action-danger { @apply font-semibold text-sniper-red hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-sniper-red/20 focus:ring-offset-2; }
     .sniper-input { @apply block w-full rounded-[10px] border-slate-300 bg-white text-sniper-navy placeholder:text-slate-400 focus:border-sniper-red focus:ring-sniper-red/20; }
     .sniper-label { @apply mb-1.5 block text-sm font-medium text-sniper-navy; }
+
+    .sniper-alert-success { @apply rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700; }
+    .sniper-alert-danger { @apply rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700; }
+    .sniper-alert-warning { @apply rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800; }
+    .sniper-alert-info { @apply rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-sniper-slate; }
+
     .sniper-badge { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold; }
     .sniper-badge-success { @apply sniper-badge bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200; }
     .sniper-badge-danger { @apply sniper-badge bg-red-50 text-red-700 ring-1 ring-red-200; }
+    .sniper-badge-warning { @apply sniper-badge bg-amber-50 text-amber-700 ring-1 ring-amber-200; }
+    .sniper-badge-info { @apply sniper-badge bg-blue-50 text-blue-700 ring-1 ring-blue-200; }
+    .sniper-badge-navy { @apply sniper-badge bg-sniper-navy/10 text-sniper-navy ring-1 ring-sniper-navy/15; }
     .sniper-badge-neutral { @apply sniper-badge bg-slate-100 text-slate-600 ring-1 ring-slate-200; }
 
+    .sniper-stat { @apply rounded-2xl bg-white p-5 shadow-sniper ring-1 ring-slate-200/80; }
+    .sniper-stat-label { @apply text-sm font-medium text-sniper-slate; }
+    .sniper-stat-value { @apply mt-1 font-heading text-2xl font-bold tracking-tight text-sniper-navy; }
+
+    .sniper-table-wrap { @apply overflow-x-auto rounded-2xl bg-white shadow-sniper ring-1 ring-slate-200/80; }
     .sniper-table { @apply min-w-full divide-y divide-slate-200 text-sm; }
     .sniper-table thead { @apply bg-slate-50; }
     .sniper-table th { @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500; }
-    .sniper-table td { @apply px-4 py-3 text-slate-700; }
+    .sniper-table td { @apply px-4 py-4 text-slate-700; }
     .sniper-table tbody { @apply divide-y divide-slate-100 bg-white; }
     .sniper-table tbody tr { @apply hover:bg-slate-50/80; }
+    .sniper-empty { @apply px-6 py-12 text-center text-sm text-sniper-slate; }
 }
 
 [x-cloak] { display: none !important; }
