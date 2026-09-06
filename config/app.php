@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'SniperPOS'),
 
     /*
     |--------------------------------------------------------------------------
@@ -34,7 +34,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | When your application is in debug mode, detailed error messages with
-    | stack traces will be shown on every error that occurs within your
+    | stack traces will be shown on every error that occurs within the
     | application. If disabled, a simple generic error page is shown.
     |
     */
@@ -60,8 +60,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | will be used by the PHP date and date-time functions. The timezone is
+    | set to "UTC" by default as it is suitable for most use cases.
     |
     */
 
@@ -74,7 +74,7 @@ return [
     |
     | The application locale determines the default locale that will be used
     | by Laravel's translation / localization methods. This option can be
-    | set to any locale for which you plan to have translation strings.
+    | set to any locale for which you plan to provide translation strings.
     |
     */
 
@@ -90,8 +90,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | This key is utilized by Laravel's encryption services and should be set
-    | to a random, 32 character string to ensure that all encrypted values
-    | are secure. You should do this prior to deploying the application.
+    | to a random, 32 character string to ensure that all encrypted values are
+    | secure. You should do this prior to deploying the application.
     |
     */
 
