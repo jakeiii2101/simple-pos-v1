@@ -1,4 +1,4 @@
-const CACHE_NAME = 'simple-pos-v2';
+const CACHE_NAME = 'sniperpos-v1';
 const APP_SHELL = [
     '/',
     '/manifest.webmanifest',
