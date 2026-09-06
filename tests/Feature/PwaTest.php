@@ -21,9 +21,11 @@ class PwaTest extends TestCase
             JSON_THROW_ON_ERROR,
         );
 
-        $this->assertSame('Simple POS', $manifest['name']);
+        $this->assertSame('SniperPOS', $manifest['name']);
+        $this->assertSame('SniperPOS', $manifest['short_name']);
         $this->assertSame('standalone', $manifest['display']);
         $this->assertSame('/dashboard', $manifest['start_url']);
+        $this->assertSame('#0F2747', $manifest['theme_color']);
         $this->assertNotEmpty($manifest['icons']);
 
         $iconsBySize = collect($manifest['icons'])->keyBy('sizes');
@@ -40,6 +42,7 @@ class PwaTest extends TestCase
 
         $this->assertStringContainsString("event.request.method !== 'GET'", $serviceWorker);
         $this->assertStringContainsString("requestUrl.origin !== self.location.origin", $serviceWorker);
+        $this->assertStringContainsString("const CACHE_NAME = 'sniperpos-v1'", $serviceWorker);
         $this->assertStringContainsString("'/icons/icon-192.png'", $serviceWorker);
         $this->assertStringContainsString("'/icons/icon-512.png'", $serviceWorker);
     }
