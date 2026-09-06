@@ -14,7 +14,8 @@
 
         <link rel="manifest" href="/manifest.webmanifest">
         <link rel="icon" href="/icons/simple-pos-icon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/icons/simple-pos-icon.svg">
+        <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192">
+        <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
