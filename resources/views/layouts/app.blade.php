@@ -4,43 +4,40 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="#111827">
+        <meta name="theme-color" content="#0F2747">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
-        <meta name="apple-mobile-web-app-title" content="Simple POS">
+        <meta name="apple-mobile-web-app-title" content="SniperPOS">
 
-        <title>{{ config('app.name', 'Simple POS') }}</title>
+        <title>{{ config('app.name', 'SniperPOS') }}</title>
 
         <link rel="manifest" href="/manifest.webmanifest">
-        <link rel="icon" href="/icons/simple-pos-icon.svg" type="image/svg+xml">
         <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192">
         <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
-        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=inter:400,500,600&family=montserrat:600,700,800&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
+    <body class="font-sans antialiased bg-slate-50">
+        <div class="min-h-screen">
             <livewire:layout.navigation />
 
-            <!-- Page Heading -->
-            @if (isset($header))
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endif
+            <div class="lg:pl-64">
+                @if (isset($header))
+                    <header class="border-b border-slate-200 bg-white">
+                        <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+                            {{ $header }}
+                        </div>
+                    </header>
+                @endif
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
+                <main class="min-h-screen bg-slate-50">
+                    {{ $slot }}
+                </main>
+            </div>
         </div>
     </body>
 </html>
