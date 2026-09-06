@@ -1,3 +1,50 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --sniper-navy: #0F2747;
+    --sniper-red: #E50914;
+    --sniper-slate: #64748B;
+    --sniper-light: #F1F5F9;
+    --sniper-white: #FFFFFF;
+    --sniper-dark: #08111F;
+}
+
+@layer base {
+    body {
+        @apply bg-slate-50 text-slate-900;
+        font-family: 'Inter', sans-serif;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', sans-serif;
+        color: var(--sniper-navy);
+    }
+
+    button,
+    [type='button'],
+    [type='submit'] {
+        @apply transition-all duration-200;
+    }
+
+    input,
+    select,
+    textarea {
+        @apply rounded-lg border-slate-300 focus:border-sniper-red focus:ring-sniper-red/20;
+    }
+}
+
+@layer components {
+    .sniper-card {
+        @apply rounded-sniper bg-white shadow-sniper ring-1 ring-slate-200/70;
+    }
+
+    .sniper-btn-primary {
+        @apply inline-flex items-center justify-center rounded-lg bg-sniper-red px-4 py-2 font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-sniper-red/30 focus:ring-offset-2;
+    }
+
+    .sniper-btn-secondary {
+        @apply inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 font-semibold text-sniper-navy hover:bg-sniper-light focus:outline-none focus:ring-2 focus:ring-sniper-navy/20 focus:ring-offset-2;
+    }
+}
