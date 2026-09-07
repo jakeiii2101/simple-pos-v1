@@ -63,38 +63,43 @@ class ReportsDashboard extends Component
     {
         $date = $this->safeDate();
         $month = $this->safeMonth();
+        $monthStart = $month->copy()->startOfMonth();
+        $monthEnd = $month->copy()->endOfMonth();
 
         $daily = Sale::query()
             ->where('status', Sale::STATUS_COMPLETED)
             ->whereDate('completed_at', $date->toDateString())
-            ->selectRaw('COUNT(*) as transactions, COALESCE(SUM(total), 0) as sales')
+            ->selectRaw('COUNT(*) as transactions, COALESCE(SUM(subtotal), 0) as gross_sales, COALESCE(SUM(discount_amount), 0) as discounts, COALESCE(SUM(total), 0) as net_sales')
             ->first();
 
         $monthly = Sale::query()
             ->where('status', Sale::STATUS_COMPLETED)
-            ->whereBetween('completed_at', [
-                $month->copy()->startOfMonth(),
-                $month->copy()->endOfMonth(),
-            ])
-            ->selectRaw('COUNT(*) as transactions, COALESCE(SUM(total), 0) as sales')
+            ->whereBetween('completed_at', [$monthStart, $monthEnd])
+            ->selectRaw('COUNT(*) as transactions, COALESCE(SUM(subtotal), 0) as gross_sales, COALESCE(SUM(discount_amount), 0) as discounts, COALESCE(SUM(total), 0) as net_sales')
             ->first();
 
         $topProducts = DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', Sale::STATUS_COMPLETED)
-            ->whereBetween('sales.completed_at', [
-                $month->copy()->startOfMonth(),
-                $month->copy()->endOfMonth(),
-            ])
+            ->whereBetween('sales.completed_at', [$monthStart, $monthEnd])
             ->select(
                 'sale_items.product_name',
                 'sale_items.sku',
                 DB::raw('SUM(sale_items.quantity) as quantity_sold'),
-                DB::raw('SUM(sale_items.line_total) as sales_total'),
+                DB::raw('SUM(sale_items.line_total) as gross_item_sales'),
             )
             ->groupBy('sale_items.product_name', 'sale_items.sku')
             ->orderByDesc('quantity_sold')
             ->limit(10)
+            ->get();
+
+        $paymentBreakdown = DB::table('sales')
+            ->leftJoin('payments', 'payments.sale_id', '=', 'sales.id')
+            ->where('sales.status', Sale::STATUS_COMPLETED)
+            ->whereBetween('sales.completed_at', [$monthStart, $monthEnd])
+            ->selectRaw("COALESCE(payments.method, 'cash') as method, COUNT(*) as transactions, COALESCE(SUM(sales.total), 0) as net_sales")
+            ->groupBy(DB::raw("COALESCE(payments.method, 'cash')"))
+            ->orderByDesc('net_sales')
             ->get();
 
         $inventory = Product::query()
@@ -109,11 +114,16 @@ class ReportsDashboard extends Component
             ->get();
 
         return view('livewire.reports.reports-dashboard', [
-            'dailySales' => (float) ($daily->sales ?? 0),
+            'dailyGrossSales' => (float) ($daily->gross_sales ?? 0),
+            'dailyDiscounts' => (float) ($daily->discounts ?? 0),
+            'dailyNetSales' => (float) ($daily->net_sales ?? 0),
             'dailyTransactions' => (int) ($daily->transactions ?? 0),
-            'monthlySales' => (float) ($monthly->sales ?? 0),
+            'monthlyGrossSales' => (float) ($monthly->gross_sales ?? 0),
+            'monthlyDiscounts' => (float) ($monthly->discounts ?? 0),
+            'monthlyNetSales' => (float) ($monthly->net_sales ?? 0),
             'monthlyTransactions' => (int) ($monthly->transactions ?? 0),
             'topProducts' => $topProducts,
+            'paymentBreakdown' => $paymentBreakdown,
             'productCount' => (int) ($inventory->product_count ?? 0),
             'unitsOnHand' => (int) ($inventory->units_on_hand ?? 0),
             'inventoryCost' => (float) ($inventory->inventory_cost ?? 0),
