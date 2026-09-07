@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "SniperPOS",
   "short_name": "SniperPOS",
   "description": "SniperPOS — Precision in Every Sale.",
@@ -7,7 +8,8 @@
   "display": "standalone",
   "background_color": "#F1F5F9",
   "theme_color": "#0F2747",
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
