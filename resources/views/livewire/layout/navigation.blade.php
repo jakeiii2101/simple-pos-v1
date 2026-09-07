@@ -47,6 +47,7 @@ new class extends Component
                         ['route' => 'sales', 'label' => 'Sales', 'icon' => 'sales'],
                         ['route' => 'reports', 'label' => 'Reports', 'icon' => 'chart'],
                         ['route' => 'users', 'label' => 'Users', 'icon' => 'users'],
+                        ['route' => 'audit-logs', 'label' => 'Audit Log', 'icon' => 'audit'],
                     ]);
                 }
             @endphp
@@ -81,6 +82,9 @@ new class extends Component
                                 @break
                             @case('chart')
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 20V10m7 10V4m7 16v-7"/></svg>
+                                @break
+                            @case('audit')
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3 19 6v5c0 4.6-2.8 8-7 10-4.2-2-7-5.4-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
                                 @break
                             @default
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>
