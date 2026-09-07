@@ -7,6 +7,7 @@ use App\Models\Sale;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -20,6 +21,14 @@ class SaleTerminal extends Component
     public array $cart = [];
 
     public string $cashReceived = '';
+
+    public string $discountType = Sale::DISCOUNT_FIXED;
+
+    public string $discountValue = '';
+
+    public ?string $appliedDiscountType = null;
+
+    public float $appliedDiscountValue = 0.0;
 
     public ?int $lastSaleId = null;
 
@@ -131,7 +140,49 @@ class SaleTerminal extends Component
     {
         $this->cart = [];
         $this->cashReceived = '';
+        $this->resetDiscountState();
         $this->resetValidation();
+    }
+
+    public function applyDiscount(): void
+    {
+        if ($this->cart === []) {
+            $this->addError('cart', 'Add at least one product before applying a discount.');
+            return;
+        }
+
+        $validated = $this->validate([
+            'discountType' => ['required', Rule::in([
+                Sale::DISCOUNT_FIXED,
+                Sale::DISCOUNT_PERCENTAGE,
+            ])],
+            'discountValue' => ['required', 'numeric', 'gt:0'],
+        ]);
+
+        $value = round((float) $validated['discountValue'], 2);
+        $subtotal = $this->cartSubtotal();
+
+        if ($validated['discountType'] === Sale::DISCOUNT_PERCENTAGE && $value > 100) {
+            $this->addError('discountValue', 'Percentage discount cannot exceed 100%.');
+            return;
+        }
+
+        if ($validated['discountType'] === Sale::DISCOUNT_FIXED && $value > $subtotal) {
+            $this->addError('discountValue', 'Fixed discount cannot exceed the current subtotal.');
+            return;
+        }
+
+        $this->appliedDiscountType = $validated['discountType'];
+        $this->appliedDiscountValue = $value;
+        $this->resetErrorBag('discountType');
+        $this->resetErrorBag('discountValue');
+    }
+
+    public function clearDiscount(): void
+    {
+        $this->resetDiscountState();
+        $this->resetErrorBag('discountType');
+        $this->resetErrorBag('discountValue');
     }
 
     public function completeSale(): void
@@ -141,25 +192,16 @@ class SaleTerminal extends Component
             return;
         }
 
-        $total = $this->cartTotal();
-
         $validated = $this->validate([
-            'cashReceived' => ['required', 'numeric', 'min:'.$total],
-        ], [
-            'cashReceived.min' => 'Cash received must be at least the sale total.',
+            'cashReceived' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $sale = DB::transaction(function () use ($validated, $total): Sale {
-            $sale = Sale::query()->create([
-                'sale_number' => 'POS-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4)),
-                'user_id' => auth()->id(),
-                'subtotal' => $total,
-                'total' => $total,
-                'cash_received' => $validated['cashReceived'],
-                'change_due' => (float) $validated['cashReceived'] - $total,
-                'status' => Sale::STATUS_COMPLETED,
-                'completed_at' => now(),
-            ]);
+        $discountType = $this->appliedDiscountType;
+        $discountValue = $this->appliedDiscountValue;
+
+        $sale = DB::transaction(function () use ($validated, $discountType, $discountValue): Sale {
+            $lines = [];
+            $subtotal = 0.0;
 
             foreach (collect($this->cart)->sortKeys() as $item) {
                 $product = Product::query()->lockForUpdate()->findOrFail($item['id']);
@@ -179,27 +221,70 @@ class SaleTerminal extends Component
 
                 $before = $product->stock_quantity;
                 $after = $before - $quantity;
-                $unitPrice = (float) $product->selling_price;
-                $lineTotal = $unitPrice * $quantity;
+                $unitPrice = round((float) $product->selling_price, 2);
+                $lineTotal = round($unitPrice * $quantity, 2);
+                $subtotal = round($subtotal + $lineTotal, 2);
+
+                $lines[] = [
+                    'product' => $product,
+                    'quantity' => $quantity,
+                    'before' => $before,
+                    'after' => $after,
+                    'unit_price' => $unitPrice,
+                    'line_total' => $lineTotal,
+                ];
+            }
+
+            $discountAmount = $this->discountAmountForSubtotal(
+                $subtotal,
+                $discountType,
+                $discountValue,
+            );
+            $total = round(max(0, $subtotal - $discountAmount), 2);
+            $cashReceived = round((float) $validated['cashReceived'], 2);
+
+            if ($cashReceived < $total) {
+                throw ValidationException::withMessages([
+                    'cashReceived' => 'Cash received must be at least the sale total.',
+                ]);
+            }
+
+            $sale = Sale::query()->create([
+                'sale_number' => 'POS-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4)),
+                'user_id' => auth()->id(),
+                'subtotal' => $subtotal,
+                'discount_type' => $discountType,
+                'discount_value' => $discountType === null ? 0 : $discountValue,
+                'discount_amount' => $discountAmount,
+                'total' => $total,
+                'cash_received' => $cashReceived,
+                'change_due' => round($cashReceived - $total, 2),
+                'status' => Sale::STATUS_COMPLETED,
+                'completed_at' => now(),
+            ]);
+
+            foreach ($lines as $line) {
+                /** @var Product $product */
+                $product = $line['product'];
 
                 $sale->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $product->name,
                     'sku' => $product->sku,
-                    'unit_price' => $unitPrice,
-                    'quantity' => $quantity,
-                    'line_total' => $lineTotal,
+                    'unit_price' => $line['unit_price'],
+                    'quantity' => $line['quantity'],
+                    'line_total' => $line['line_total'],
                 ]);
 
-                $product->update(['stock_quantity' => $after]);
+                $product->update(['stock_quantity' => $line['after']]);
 
                 StockMovement::query()->create([
                     'product_id' => $product->id,
                     'user_id' => auth()->id(),
                     'type' => StockMovement::TYPE_SALE,
-                    'quantity' => -$quantity,
-                    'stock_before' => $before,
-                    'stock_after' => $after,
+                    'quantity' => -$line['quantity'],
+                    'stock_before' => $line['before'],
+                    'stock_after' => $line['after'],
                     'reference' => $sale->sale_number,
                     'reason' => 'POS sale',
                 ]);
@@ -212,15 +297,74 @@ class SaleTerminal extends Component
         $this->cart = [];
         $this->cashReceived = '';
         $this->search = '';
+        $this->resetDiscountState();
         $this->resetValidation();
         session()->flash('success', 'Sale completed successfully.');
     }
 
-    private function cartTotal(): float
+    private function cartSubtotal(): float
     {
         return round(collect($this->cart)->sum(
             fn (array $item): float => $item['price'] * $item['quantity']
         ), 2);
+    }
+
+    private function discountAmountForSubtotal(float $subtotal, ?string $type, float $value): float
+    {
+        if ($type === null) {
+            return 0.0;
+        }
+
+        if ($value <= 0) {
+            throw ValidationException::withMessages([
+                'discountValue' => 'Discount value must be greater than zero.',
+            ]);
+        }
+
+        if ($type === Sale::DISCOUNT_FIXED) {
+            if ($value > $subtotal) {
+                throw ValidationException::withMessages([
+                    'discountValue' => 'Fixed discount cannot exceed the sale subtotal.',
+                ]);
+            }
+
+            return round($value, 2);
+        }
+
+        if ($type === Sale::DISCOUNT_PERCENTAGE) {
+            if ($value > 100) {
+                throw ValidationException::withMessages([
+                    'discountValue' => 'Percentage discount cannot exceed 100%.',
+                ]);
+            }
+
+            return round($subtotal * ($value / 100), 2);
+        }
+
+        throw ValidationException::withMessages([
+            'discountType' => 'Invalid discount type.',
+        ]);
+    }
+
+    private function previewDiscountAmount(float $subtotal): float
+    {
+        if ($this->appliedDiscountType === Sale::DISCOUNT_FIXED) {
+            return round(min($this->appliedDiscountValue, $subtotal), 2);
+        }
+
+        if ($this->appliedDiscountType === Sale::DISCOUNT_PERCENTAGE) {
+            return round($subtotal * (min($this->appliedDiscountValue, 100) / 100), 2);
+        }
+
+        return 0.0;
+    }
+
+    private function resetDiscountState(): void
+    {
+        $this->discountType = Sale::DISCOUNT_FIXED;
+        $this->discountValue = '';
+        $this->appliedDiscountType = null;
+        $this->appliedDiscountValue = 0.0;
     }
 
     public function render()
@@ -241,14 +385,17 @@ class SaleTerminal extends Component
             ->limit(20)
             ->get();
 
-        $total = $this->cartTotal();
+        $subtotal = $this->cartSubtotal();
+        $discountAmount = $this->previewDiscountAmount($subtotal);
+        $total = round(max(0, $subtotal - $discountAmount), 2);
         $cash = is_numeric($this->cashReceived) ? (float) $this->cashReceived : 0.0;
 
         return view('livewire.pos.sale-terminal', [
             'products' => $products,
-            'subtotal' => $total,
+            'subtotal' => $subtotal,
+            'discountAmount' => $discountAmount,
             'total' => $total,
-            'changeDue' => max(0, $cash - $total),
+            'changeDue' => max(0, round($cash - $total, 2)),
         ]);
     }
 }
