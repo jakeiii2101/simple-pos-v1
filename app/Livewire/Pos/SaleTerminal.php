@@ -6,6 +6,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
+use App\Support\Audit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -339,6 +340,20 @@ class SaleTerminal extends Component
                     'reason' => 'POS sale',
                 ]);
             }
+
+            Audit::record(
+                'sale.completed',
+                $sale,
+                'POS sale completed: '.$sale->sale_number,
+                [
+                    'sale_number' => $sale->sale_number,
+                    'subtotal' => $subtotal,
+                    'discount_amount' => $discountAmount,
+                    'total' => $total,
+                    'payment_method' => $paymentMethod,
+                    'item_count' => (int) collect($lines)->sum(fn (array $line): int => $line['quantity']),
+                ],
+            );
 
             return $sale;
         });
