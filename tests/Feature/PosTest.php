@@ -26,7 +26,7 @@ class PosTest extends TestCase
         $this->actingAs($cashier)->get('/pos')->assertOk();
     }
 
-    public function test_completed_cash_sale_saves_payment_items_and_deducts_stock(): void
+    public function test_completed_cash_sale_saves_payment_items_deducts_stock_and_audits(): void
     {
         $cashier = User::factory()->create();
         $product = $this->createProduct(
@@ -75,6 +75,12 @@ class PosTest extends TestCase
             'stock_before' => 10,
             'stock_after' => 8,
             'reference' => $sale->sale_number,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $cashier->id,
+            'action' => 'sale.completed',
+            'auditable_type' => Sale::class,
+            'auditable_id' => $sale->id,
         ]);
     }
 
@@ -289,6 +295,7 @@ class PosTest extends TestCase
 
         $this->assertDatabaseCount('sales', 0);
         $this->assertDatabaseCount('payments', 0);
+        $this->assertDatabaseCount('audit_logs', 0);
         $this->assertSame(1, $product->fresh()->stock_quantity);
     }
 
