@@ -33,7 +33,7 @@ class InventoryTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_stock_in_updates_product_and_creates_movement(): void
+    public function test_stock_in_updates_product_creates_movement_and_audit_log(): void
     {
         $admin = User::factory()->admin()->create();
         $product = $this->createProduct(stock: 10);
@@ -49,6 +49,8 @@ class InventoryTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertSame(15, $product->fresh()->stock_quantity);
+        $movement = StockMovement::query()->firstOrFail();
+
         $this->assertDatabaseHas('stock_movements', [
             'product_id' => $product->id,
             'user_id' => $admin->id,
@@ -56,6 +58,12 @@ class InventoryTest extends TestCase
             'quantity' => 5,
             'stock_before' => 10,
             'stock_after' => 15,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $admin->id,
+            'action' => 'inventory.movement',
+            'auditable_type' => StockMovement::class,
+            'auditable_id' => $movement->id,
         ]);
     }
 
@@ -76,6 +84,7 @@ class InventoryTest extends TestCase
 
         $this->assertSame(3, $product->fresh()->stock_quantity);
         $this->assertDatabaseCount('stock_movements', 0);
+        $this->assertDatabaseCount('audit_logs', 0);
     }
 
     public function test_adjustment_can_increase_or_decrease_stock(): void
