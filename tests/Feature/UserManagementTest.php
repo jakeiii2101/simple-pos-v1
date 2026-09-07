@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\Users\UserManagement;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -31,7 +32,7 @@ class UserManagementTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_admin_can_create_cashier(): void
+    public function test_admin_can_create_cashier_and_action_is_audited_without_password_data(): void
     {
         $admin = User::factory()->admin()->create();
 
@@ -52,6 +53,39 @@ class UserManagementTest extends TestCase
         $this->assertSame(User::ROLE_CASHIER, $user->role);
         $this->assertSame(User::STATUS_ACTIVE, $user->status);
         $this->assertTrue(Hash::check('password123', $user->password));
+
+        $audit = AuditLog::query()->where('action', 'user.created')->firstOrFail();
+
+        $this->assertSame($admin->id, $audit->user_id);
+        $this->assertSame(User::class, $audit->auditable_type);
+        $this->assertSame($user->id, $audit->auditable_id);
+        $this->assertArrayNotHasKey('password', $audit->metadata ?? []);
+        $this->assertArrayNotHasKey('password_confirmation', $audit->metadata ?? []);
+    }
+
+    public function test_admin_user_update_is_audited_without_password_value(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $cashier = User::factory()->create([
+            'name' => 'Cashier Two',
+            'status' => User::STATUS_ACTIVE,
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(UserManagement::class)
+            ->call('edit', $cashier->id)
+            ->set('status', User::STATUS_INACTIVE)
+            ->set('password', 'newpassword123')
+            ->set('passwordConfirmation', 'newpassword123')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $audit = AuditLog::query()->where('action', 'user.updated')->firstOrFail();
+
+        $this->assertSame(true, $audit->metadata['password_changed']);
+        $this->assertArrayNotHasKey('password', $audit->metadata);
+        $this->assertSame(User::STATUS_ACTIVE, $audit->metadata['previous_status']);
+        $this->assertSame(User::STATUS_INACTIVE, $audit->metadata['status']);
     }
 
     public function test_admin_cannot_deactivate_own_account(): void
