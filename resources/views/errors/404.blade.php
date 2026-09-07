@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Page Not Found — SniperPOS</title>
+    <link rel="preconnect" href="https://fonts.bunny.net"><link href="https://fonts.bunny.net/css?family=inter:400,500,600&family=montserrat:600,700,800&display=swap" rel="stylesheet" />
+    @vite(['resources/css/app.css','resources/js/app.js'])
+</head>
+<body class="bg-slate-50">
+    <main class="flex min-h-screen items-center justify-center px-5 py-12">
+        <div class="w-full max-w-xl text-center">
+            <x-application-logo class="mx-auto h-20 w-20" />
+            <div class="mt-7 font-heading text-7xl font-extrabold tracking-tight text-sniper-red">404</div>
+            <h1 class="mt-3 font-heading text-3xl font-bold text-sniper-navy">Page not found</h1>
+            <p class="mx-auto mt-3 max-w-md text-sm leading-6 text-sniper-slate">The page you requested may have moved, been removed, or the address may be incorrect.</p>
+            <div class="mt-7 flex flex-wrap justify-center gap-3"><a href="/" class="sniper-btn-secondary">Go Home</a>@auth<a href="/dashboard" class="sniper-btn-primary">Dashboard</a>@else<a href="/login" class="sniper-btn-primary">Log In</a>@endauth</div>
+            <p class="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">SniperPOS · Precision in Every Sale.</p>
+        </div>
+    </main>
+</body>
+</html>

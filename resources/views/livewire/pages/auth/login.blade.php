@@ -9,64 +9,40 @@ new #[Layout('layouts.guest')] class extends Component
 {
     public LoginForm $form;
 
-    /**
-     * Handle an incoming authentication request.
-     */
     public function login(): void
     {
         $this->validate();
-
         $this->form->authenticate();
-
         Session::regenerate();
         Session::forget('url.intended');
-
-        $this->redirect(route('dashboard', absolute: false), navigate: true);
+        $this->redirect('/dashboard', navigate: true);
     }
 }; ?>
 
 <div>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    <div class="mb-6">
+        <div class="sniper-kicker">Welcome Back</div>
+        <h2 class="mt-1 font-heading text-2xl font-bold tracking-tight text-sniper-navy">Log in to SniperPOS</h2>
+        <p class="mt-2 text-sm leading-6 text-sniper-slate">Access your dashboard, sales, inventory, and reports.</p>
+    </div>
 
-    <form wire:submit="login">
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="form.email" id="email" class="block mt-1 w-full" type="email" name="email" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('form.email')" class="mt-2" />
-        </div>
+    <x-auth-session-status class="mb-5" :status="session('status')" />
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+    <form wire:submit="login" class="space-y-5">
+        <div><x-input-label for="email" :value="__('Email')" /><x-text-input wire:model="form.email" id="email" class="mt-1.5 block w-full" type="email" name="email" required autofocus autocomplete="username" placeholder="you@example.com" /><x-input-error :messages="$errors->get('form.email')" class="mt-2" /></div>
+        <div><x-input-label for="password" :value="__('Password')" /><x-text-input wire:model="form.password" id="password" class="mt-1.5 block w-full" type="password" name="password" required autocomplete="current-password" placeholder="Enter your password" /><x-input-error :messages="$errors->get('form.password')" class="mt-2" /></div>
 
-            <x-text-input wire:model="form.password" id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('form.password')" class="mt-2" />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember" class="inline-flex items-center">
-                <input wire:model="form.remember" id="remember" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <label for="remember" class="inline-flex items-center gap-2 text-sm text-sniper-slate">
+                <input wire:model="form.remember" id="remember" type="checkbox" class="rounded border-slate-300 text-sniper-red shadow-sm focus:ring-sniper-red/30" name="remember">
+                <span>{{ __('Remember me') }}</span>
             </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}" wire:navigate>
-                    {{ __('Forgot your password?') }}
-                </a>
+                <a class="text-sm font-semibold text-sniper-navy hover:text-sniper-red focus:outline-none focus:ring-2 focus:ring-sniper-red/20" href="{{ route('password.request') }}" wire:navigate>{{ __('Forgot your password?') }}</a>
             @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
         </div>
+
+        <x-primary-button class="w-full py-3">{{ __('Log in') }}</x-primary-button>
+        <a href="/" class="block text-center text-sm font-medium text-sniper-slate hover:text-sniper-red">← Back to SniperPOS home</a>
     </form>
 </div>
