@@ -12,6 +12,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'sale_number',
     'user_id',
     'subtotal',
+    'discount_type',
+    'discount_value',
+    'discount_amount',
     'total',
     'cash_received',
     'change_due',
@@ -23,6 +26,8 @@ class Sale extends Model
     use HasFactory;
 
     public const STATUS_COMPLETED = 'completed';
+    public const DISCOUNT_FIXED = 'fixed';
+    public const DISCOUNT_PERCENTAGE = 'percentage';
 
     public function user(): BelongsTo
     {
@@ -38,6 +43,8 @@ class Sale extends Model
     {
         return [
             'subtotal' => 'decimal:2',
+            'discount_value' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'total' => 'decimal:2',
             'cash_received' => 'decimal:2',
             'change_due' => 'decimal:2',

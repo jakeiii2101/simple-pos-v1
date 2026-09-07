@@ -122,8 +122,57 @@
                 </div>
 
                 <div class="border-t border-slate-200 bg-slate-50 px-5 py-5">
+                    @if ($cart)
+                        <div class="mb-5 rounded-xl border border-slate-200 bg-white p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <div class="text-xs font-bold uppercase tracking-[0.12em] text-sniper-navy">Discount</div>
+                                    <div class="mt-1 text-[11px] text-sniper-slate">Apply a fixed amount or percentage before checkout.</div>
+                                </div>
+                                @if ($appliedDiscountType)
+                                    <button type="button" wire:click="clearDiscount" class="shrink-0 text-xs font-semibold text-red-600 hover:text-red-700">Clear</button>
+                                @endif
+                            </div>
+
+                            <div class="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+                                <div>
+                                    <label for="discount-type" class="sniper-label">Type</label>
+                                    <select id="discount-type" wire:model="discountType" class="sniper-input">
+                                        <option value="fixed">Fixed amount</option>
+                                        <option value="percentage">Percentage</option>
+                                    </select>
+                                    <x-input-error :messages="$errors->get('discountType')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <label for="discount-value" class="sniper-label">Value</label>
+                                    <input id="discount-value" wire:model="discountValue" type="number" step="0.01" min="0" class="sniper-input text-right" placeholder="0.00" />
+                                    <x-input-error :messages="$errors->get('discountValue')" class="mt-2" />
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="button" wire:click="applyDiscount" class="sniper-btn-secondary h-[42px] w-full px-4 sm:w-auto">Apply</button>
+                                </div>
+                            </div>
+
+                            @if ($appliedDiscountType)
+                                <div class="mt-3 flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800 ring-1 ring-emerald-200">
+                                    <span class="font-semibold">Discount applied</span>
+                                    <span>
+                                        @if ($appliedDiscountType === 'percentage')
+                                            {{ number_format($appliedDiscountValue, 2) }}%
+                                        @else
+                                            ₱{{ number_format($appliedDiscountValue, 2) }}
+                                        @endif
+                                    </span>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between text-sniper-slate"><span>Subtotal</span><span class="font-medium text-sniper-navy">₱{{ number_format($subtotal, 2) }}</span></div>
+                        @if ($discountAmount > 0)
+                            <div class="flex justify-between text-emerald-700"><span>Discount</span><span class="font-semibold">− ₱{{ number_format($discountAmount, 2) }}</span></div>
+                        @endif
                         <div class="flex items-end justify-between border-t border-slate-200 pt-3">
                             <span class="font-heading text-base font-bold text-sniper-navy">Grand Total</span>
                             <span class="font-heading text-2xl font-extrabold tracking-tight text-sniper-navy">₱{{ number_format($total, 2) }}</span>
