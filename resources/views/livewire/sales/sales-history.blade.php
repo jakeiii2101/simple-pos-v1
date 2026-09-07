@@ -10,7 +10,7 @@
 
     <div class="grid gap-4 sm:grid-cols-3">
         <div class="sniper-stat"><div class="sniper-stat-label">Transactions</div><div class="sniper-stat-value">{{ number_format($transactionCount) }}</div><div class="mt-2 text-xs text-sniper-slate">Completed sales in the current result set</div></div>
-        <div class="sniper-stat"><div class="sniper-stat-label">Gross Sales</div><div class="sniper-stat-value">₱{{ number_format($grossSales, 2) }}</div><div class="mt-2 text-xs text-sniper-slate">Total sales value before later reporting adjustments</div></div>
+        <div class="sniper-stat"><div class="sniper-stat-label">Gross Sales</div><div class="sniper-stat-value">₱{{ number_format($grossSales, 2) }}</div><div class="mt-2 text-xs text-sniper-slate">Total sales value in the current result set</div></div>
         <div class="sniper-stat"><div class="sniper-stat-label">Items Sold</div><div class="sniper-stat-value">{{ number_format($itemsSold) }}</div><div class="mt-2 text-xs text-sniper-slate">Units included in completed transactions</div></div>
     </div>
 
@@ -25,21 +25,36 @@
     </div>
 
     <div class="sniper-table-wrap mt-6">
-        <div class="sniper-section-header"><h2 class="font-heading text-base font-bold text-sniper-navy">Completed Transactions</h2><p class="mt-1 text-xs text-sniper-slate">Open any receipt in a separate tab for printing or review.</p></div>
+        <div class="sniper-section-header"><h2 class="font-heading text-base font-bold text-sniper-navy">Completed Transactions</h2><p class="mt-1 text-xs text-sniper-slate">Open transaction details or a print-ready receipt.</p></div>
         <table class="sniper-table">
-            <thead><tr><th>Receipt</th><th>Date</th><th>Cashier</th><th class="!text-right">Items</th><th class="!text-right">Total</th><th class="!text-right">Action</th></tr></thead>
+            <thead><tr><th>Receipt</th><th>Date</th><th>Cashier</th><th>Payment</th><th class="!text-right">Items</th><th class="!text-right">Total</th><th class="!text-right">Action</th></tr></thead>
             <tbody>
                 @forelse ($sales as $sale)
+                    @php
+                        $method = $sale->payment?->method ?? 'cash';
+                        $methodLabel = match ($method) {
+                            'gcash' => 'GCash',
+                            'card' => 'Card',
+                            'other' => 'Other',
+                            default => 'Cash',
+                        };
+                    @endphp
                     <tr wire:key="sale-{{ $sale->id }}">
                         <td class="whitespace-nowrap font-semibold !text-sniper-navy">{{ $sale->sale_number }}</td>
                         <td class="whitespace-nowrap">{{ $sale->completed_at->format('Y-m-d H:i') }}</td>
                         <td>{{ $sale->user->name }}</td>
+                        <td><span class="sniper-badge-neutral">{{ $methodLabel }}</span></td>
                         <td class="!text-right whitespace-nowrap">{{ number_format($sale->items->sum('quantity')) }}</td>
                         <td class="!text-right whitespace-nowrap font-bold !text-sniper-navy">₱{{ number_format((float) $sale->total, 2) }}</td>
-                        <td class="!text-right whitespace-nowrap"><a href="{{ route('sales.receipt', ['sale' => $sale->id], false) }}" target="_blank" class="sniper-action-link">View Receipt</a></td>
+                        <td class="!text-right whitespace-nowrap">
+                            <div class="flex justify-end gap-3">
+                                <a href="{{ route('sales.show', ['sale' => $sale->id], false) }}" wire:navigate class="sniper-action-link">Details</a>
+                                <a href="{{ route('sales.receipt', ['sale' => $sale->id], false) }}" target="_blank" class="sniper-action-link">Receipt</a>
+                            </div>
+                        </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="sniper-empty">No completed sales found.</td></tr>
+                    <tr><td colspan="7" class="sniper-empty">No completed sales found.</td></tr>
                 @endforelse
             </tbody>
         </table>

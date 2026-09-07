@@ -33,7 +33,6 @@ class SalesHistory extends Component
     public function render()
     {
         $query = Sale::query()
-            ->with(['user', 'items'])
             ->where('status', Sale::STATUS_COMPLETED)
             ->when(trim($this->search) !== '', function ($query): void {
                 $term = trim($this->search);
@@ -56,7 +55,11 @@ class SalesHistory extends Component
             ->sum('items_sold');
 
         return view('livewire.sales.sales-history', [
-            'sales' => $query->latest('completed_at')->limit(100)->get(),
+            'sales' => (clone $query)
+                ->with(['user', 'items', 'payment'])
+                ->latest('completed_at')
+                ->limit(100)
+                ->get(),
             'transactionCount' => (int) ($summary->transaction_count ?? 0),
             'grossSales' => (float) ($summary->gross_sales ?? 0),
             'itemsSold' => (int) $itemsSold,

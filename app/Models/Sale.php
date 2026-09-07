@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use LogicException;
 
 #[Fillable([
     'sale_number',
@@ -43,6 +44,39 @@ class Sale extends Model
     public function payment(): HasOne
     {
         return $this->hasOne(Payment::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Sale $sale): void {
+            if ($sale->status === self::STATUS_COMPLETED) {
+                throw new LogicException('Completed sales are financial history and cannot be deleted.');
+            }
+        });
+
+        static::updating(function (Sale $sale): void {
+            if ($sale->getOriginal('status') !== self::STATUS_COMPLETED) {
+                return;
+            }
+
+            $protected = [
+                'sale_number',
+                'user_id',
+                'subtotal',
+                'discount_type',
+                'discount_value',
+                'discount_amount',
+                'total',
+                'cash_received',
+                'change_due',
+                'status',
+                'completed_at',
+            ];
+
+            if ($sale->isDirty($protected)) {
+                throw new LogicException('Completed sales are immutable financial history.');
+            }
+        });
     }
 
     protected function casts(): array
