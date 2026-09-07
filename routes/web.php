@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Audit\AuditLogList;
 use App\Livewire\Categories\CategoryList;
 use App\Livewire\Dashboard\DashboardOverview;
 use App\Livewire\Inventory\InventoryList;
@@ -45,6 +46,7 @@ Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
 
     Route::get('reports', ReportsDashboard::class)->name('reports');
     Route::get('users', UserManagement::class)->name('users');
+    Route::get('audit-logs', AuditLogList::class)->name('audit-logs');
 });
 
 require __DIR__.'/auth.php';
