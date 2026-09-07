@@ -179,15 +179,44 @@
                         </div>
                     </div>
 
-                    <div class="mt-5">
-                        <label for="cash-received" class="sniper-label">Cash Received</label>
-                        <input id="cash-received" wire:model.live.debounce.200ms="cashReceived" type="number" step="0.01" min="0" class="sniper-input text-right text-lg font-semibold" placeholder="0.00" />
-                        <x-input-error :messages="$errors->get('cashReceived')" class="mt-2" />
-                    </div>
+                    <div class="mt-5 rounded-xl border border-slate-200 bg-white p-4">
+                        <div class="text-xs font-bold uppercase tracking-[0.12em] text-sniper-navy">Payment</div>
+                        <div class="mt-1 text-[11px] text-sniper-slate">Choose how the customer will settle this sale.</div>
 
-                    <div class="mt-3 flex items-center justify-between rounded-xl bg-white px-4 py-3 ring-1 ring-slate-200">
-                        <span class="text-sm text-sniper-slate">Change</span>
-                        <span class="font-heading text-lg font-bold text-sniper-navy">₱{{ number_format($changeDue, 2) }}</span>
+                        <div class="mt-3">
+                            <label for="payment-method" class="sniper-label">Payment Method</label>
+                            <select id="payment-method" wire:model.live="paymentMethod" class="sniper-input">
+                                <option value="cash">Cash</option>
+                                <option value="gcash">GCash</option>
+                                <option value="card">Card</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('paymentMethod')" class="mt-2" />
+                        </div>
+
+                        @if ($paymentMethod === 'cash')
+                            <div class="mt-3">
+                                <label for="cash-received" class="sniper-label">Cash Received</label>
+                                <input id="cash-received" wire:model.live.debounce.200ms="cashReceived" type="number" step="0.01" min="0" class="sniper-input text-right text-lg font-semibold" placeholder="0.00" />
+                                <x-input-error :messages="$errors->get('cashReceived')" class="mt-2" />
+                            </div>
+
+                            <div class="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
+                                <span class="text-sm text-sniper-slate">Change</span>
+                                <span class="font-heading text-lg font-bold text-sniper-navy">₱{{ number_format($changeDue, 2) }}</span>
+                            </div>
+                        @else
+                            <div class="mt-3">
+                                <label for="payment-reference" class="sniper-label">Reference / Transaction No.</label>
+                                <input id="payment-reference" wire:model="paymentReference" type="text" maxlength="100" class="sniper-input" placeholder="Enter payment reference" autocomplete="off" />
+                                <x-input-error :messages="$errors->get('paymentReference')" class="mt-2" />
+                            </div>
+
+                            <div class="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
+                                <span class="text-sm text-sniper-slate">Amount to collect</span>
+                                <span class="font-heading text-lg font-bold text-sniper-navy">₱{{ number_format($total, 2) }}</span>
+                            </div>
+                        @endif
                     </div>
 
                     <button type="button" wire:click="completeSale" wire:loading.attr="disabled" class="sniper-btn-primary mt-5 w-full gap-2 py-3.5 font-heading uppercase tracking-[0.08em]">

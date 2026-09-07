@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Pos\SaleTerminal;
 use App\Models\Category;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
@@ -25,7 +26,7 @@ class PosTest extends TestCase
         $this->actingAs($cashier)->get('/pos')->assertOk();
     }
 
-    public function test_completed_sale_saves_items_and_deducts_stock(): void
+    public function test_completed_cash_sale_saves_payment_items_and_deducts_stock(): void
     {
         $cashier = User::factory()->create();
         $product = $this->createProduct(
@@ -52,6 +53,14 @@ class PosTest extends TestCase
         $this->assertSame('0.00', $sale->discount_amount);
         $this->assertSame('240.00', $sale->total);
         $this->assertSame('60.00', $sale->change_due);
+        $this->assertDatabaseHas('payments', [
+            'sale_id' => $sale->id,
+            'method' => Payment::METHOD_CASH,
+            'amount' => 240,
+            'amount_tendered' => 300,
+            'change_due' => 60,
+            'reference' => null,
+        ]);
         $this->assertDatabaseHas('sale_items', [
             'sale_id' => $sale->id,
             'product_id' => $product->id,
@@ -191,6 +200,78 @@ class PosTest extends TestCase
         ]);
     }
 
+    public function test_gcash_checkout_creates_payment_reference_without_cash_change(): void
+    {
+        $cashier = User::factory()->create();
+        $product = $this->createProduct('GCASH-001', 'GCash Item', 150, 5);
+
+        Livewire::actingAs($cashier)
+            ->test(SaleTerminal::class)
+            ->call('addProduct', $product->id)
+            ->set('paymentMethod', Payment::METHOD_GCASH)
+            ->set('paymentReference', 'GCASH-REF-12345')
+            ->call('completeSale')
+            ->assertHasNoErrors();
+
+        $sale = Sale::query()->firstOrFail();
+
+        $this->assertSame('0.00', $sale->cash_received);
+        $this->assertSame('0.00', $sale->change_due);
+        $this->assertDatabaseHas('payments', [
+            'sale_id' => $sale->id,
+            'method' => Payment::METHOD_GCASH,
+            'amount' => 150,
+            'amount_tendered' => 150,
+            'change_due' => 0,
+            'reference' => 'GCASH-REF-12345',
+        ]);
+    }
+
+    public function test_card_and_other_payment_methods_are_supported(): void
+    {
+        foreach ([Payment::METHOD_CARD, Payment::METHOD_OTHER] as $index => $method) {
+            $cashier = User::factory()->create();
+            $product = $this->createProduct(
+                'NONCASH-'.($index + 1),
+                'Non Cash Item '.($index + 1),
+                75,
+                5,
+            );
+            $reference = strtoupper($method).'-REF-'.($index + 1);
+
+            Livewire::actingAs($cashier)
+                ->test(SaleTerminal::class)
+                ->call('addProduct', $product->id)
+                ->set('paymentMethod', $method)
+                ->set('paymentReference', $reference)
+                ->call('completeSale')
+                ->assertHasNoErrors();
+
+            $this->assertDatabaseHas('payments', [
+                'method' => $method,
+                'amount' => 75,
+                'reference' => $reference,
+            ]);
+        }
+    }
+
+    public function test_non_cash_payment_requires_reference(): void
+    {
+        $cashier = User::factory()->create();
+        $product = $this->createProduct('REF-001', 'Reference Required Item', 100, 5);
+
+        Livewire::actingAs($cashier)
+            ->test(SaleTerminal::class)
+            ->call('addProduct', $product->id)
+            ->set('paymentMethod', Payment::METHOD_GCASH)
+            ->set('paymentReference', '')
+            ->call('completeSale')
+            ->assertHasErrors('paymentReference');
+
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('payments', 0);
+    }
+
     public function test_sale_cannot_complete_when_stock_changed_below_cart_quantity(): void
     {
         $cashier = User::factory()->create();
@@ -207,6 +288,7 @@ class PosTest extends TestCase
         $component->call('completeSale')->assertHasErrors('cart');
 
         $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('payments', 0);
         $this->assertSame(1, $product->fresh()->stock_quantity);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Pos;
 
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
@@ -21,6 +22,10 @@ class SaleTerminal extends Component
     public array $cart = [];
 
     public string $cashReceived = '';
+
+    public string $paymentMethod = Payment::METHOD_CASH;
+
+    public string $paymentReference = '';
 
     public string $discountType = Sale::DISCOUNT_FIXED;
 
@@ -139,8 +144,8 @@ class SaleTerminal extends Component
     public function clearCart(): void
     {
         $this->cart = [];
-        $this->cashReceived = '';
         $this->resetDiscountState();
+        $this->resetPaymentState();
         $this->resetValidation();
     }
 
@@ -192,14 +197,30 @@ class SaleTerminal extends Component
             return;
         }
 
-        $validated = $this->validate([
-            'cashReceived' => ['required', 'numeric', 'min:0'],
+        $rules = [
+            'paymentMethod' => ['required', Rule::in([
+                Payment::METHOD_CASH,
+                Payment::METHOD_GCASH,
+                Payment::METHOD_CARD,
+                Payment::METHOD_OTHER,
+            ])],
+        ];
+
+        if ($this->paymentMethod === Payment::METHOD_CASH) {
+            $rules['cashReceived'] = ['required', 'numeric', 'min:0'];
+        } else {
+            $rules['paymentReference'] = ['required', 'string', 'max:100'];
+        }
+
+        $validated = $this->validate($rules, [
+            'paymentReference.required' => 'A payment reference is required for non-cash payments.',
         ]);
 
         $discountType = $this->appliedDiscountType;
         $discountValue = $this->appliedDiscountValue;
+        $paymentMethod = $validated['paymentMethod'];
 
-        $sale = DB::transaction(function () use ($validated, $discountType, $discountValue): Sale {
+        $sale = DB::transaction(function () use ($validated, $discountType, $discountValue, $paymentMethod): Sale {
             $lines = [];
             $subtotal = 0.0;
 
@@ -241,12 +262,33 @@ class SaleTerminal extends Component
                 $discountValue,
             );
             $total = round(max(0, $subtotal - $discountAmount), 2);
-            $cashReceived = round((float) $validated['cashReceived'], 2);
 
-            if ($cashReceived < $total) {
-                throw ValidationException::withMessages([
-                    'cashReceived' => 'Cash received must be at least the sale total.',
-                ]);
+            if ($paymentMethod === Payment::METHOD_CASH) {
+                $amountTendered = round((float) $validated['cashReceived'], 2);
+
+                if ($amountTendered < $total) {
+                    throw ValidationException::withMessages([
+                        'cashReceived' => 'Cash received must be at least the sale total.',
+                    ]);
+                }
+
+                $changeDue = round($amountTendered - $total, 2);
+                $paymentReference = null;
+                $saleCashReceived = $amountTendered;
+                $saleChangeDue = $changeDue;
+            } else {
+                $paymentReference = trim((string) $validated['paymentReference']);
+
+                if ($paymentReference === '') {
+                    throw ValidationException::withMessages([
+                        'paymentReference' => 'A payment reference is required for non-cash payments.',
+                    ]);
+                }
+
+                $amountTendered = $total;
+                $changeDue = 0.0;
+                $saleCashReceived = 0.0;
+                $saleChangeDue = 0.0;
             }
 
             $sale = Sale::query()->create([
@@ -257,10 +299,18 @@ class SaleTerminal extends Component
                 'discount_value' => $discountType === null ? 0 : $discountValue,
                 'discount_amount' => $discountAmount,
                 'total' => $total,
-                'cash_received' => $cashReceived,
-                'change_due' => round($cashReceived - $total, 2),
+                'cash_received' => $saleCashReceived,
+                'change_due' => $saleChangeDue,
                 'status' => Sale::STATUS_COMPLETED,
                 'completed_at' => now(),
+            ]);
+
+            $sale->payment()->create([
+                'method' => $paymentMethod,
+                'amount' => $total,
+                'amount_tendered' => $amountTendered,
+                'change_due' => $changeDue,
+                'reference' => $paymentReference,
             ]);
 
             foreach ($lines as $line) {
@@ -295,9 +345,9 @@ class SaleTerminal extends Component
 
         $this->lastSaleId = $sale->id;
         $this->cart = [];
-        $this->cashReceived = '';
         $this->search = '';
         $this->resetDiscountState();
+        $this->resetPaymentState();
         $this->resetValidation();
         session()->flash('success', 'Sale completed successfully.');
     }
@@ -367,6 +417,13 @@ class SaleTerminal extends Component
         $this->appliedDiscountValue = 0.0;
     }
 
+    private function resetPaymentState(): void
+    {
+        $this->paymentMethod = Payment::METHOD_CASH;
+        $this->paymentReference = '';
+        $this->cashReceived = '';
+    }
+
     public function render()
     {
         $term = trim($this->search);
@@ -389,13 +446,16 @@ class SaleTerminal extends Component
         $discountAmount = $this->previewDiscountAmount($subtotal);
         $total = round(max(0, $subtotal - $discountAmount), 2);
         $cash = is_numeric($this->cashReceived) ? (float) $this->cashReceived : 0.0;
+        $changeDue = $this->paymentMethod === Payment::METHOD_CASH
+            ? max(0, round($cash - $total, 2))
+            : 0.0;
 
         return view('livewire.pos.sale-terminal', [
             'products' => $products,
             'subtotal' => $subtotal,
             'discountAmount' => $discountAmount,
             'total' => $total,
-            'changeDue' => max(0, round($cash - $total, 2)),
+            'changeDue' => $changeDue,
         ]);
     }
 }
