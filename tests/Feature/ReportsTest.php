@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Reports\ReportsDashboard;
 use App\Models\Category;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
@@ -33,7 +34,7 @@ class ReportsTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_reports_show_sales_top_products_and_inventory_summary(): void
+    public function test_reports_show_gross_discounts_net_payments_top_products_and_inventory(): void
     {
         $admin = User::factory()->admin()->create();
         $category = Category::query()->create([
@@ -58,9 +59,12 @@ class ReportsTest extends TestCase
             'sale_number' => 'POS-REPORT-001',
             'user_id' => $admin->id,
             'subtotal' => 240,
-            'total' => 240,
-            'cash_received' => 300,
-            'change_due' => 60,
+            'discount_type' => Sale::DISCOUNT_FIXED,
+            'discount_value' => 40,
+            'discount_amount' => 40,
+            'total' => 200,
+            'cash_received' => 0,
+            'change_due' => 0,
             'status' => Sale::STATUS_COMPLETED,
             'completed_at' => now(),
         ]);
@@ -74,11 +78,23 @@ class ReportsTest extends TestCase
             'line_total' => 240,
         ]);
 
+        Payment::query()->create([
+            'sale_id' => $sale->id,
+            'method' => Payment::METHOD_GCASH,
+            'amount' => 200,
+            'amount_tendered' => null,
+            'change_due' => 0,
+            'reference' => 'GCASH-REPORT-001',
+        ]);
+
         Livewire::actingAs($admin)
             ->test(ReportsDashboard::class)
             ->set('reportDate', now()->toDateString())
             ->set('reportMonth', now()->format('Y-m'))
             ->assertSee('240.00')
+            ->assertSee('40.00')
+            ->assertSee('200.00')
+            ->assertSee('GCash')
             ->assertSee('Vicks VaporRub Extra Strong')
             ->assertSee('3')
             ->assertSee('300.00');
