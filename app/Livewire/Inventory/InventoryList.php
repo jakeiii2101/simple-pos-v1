@@ -4,6 +4,7 @@ namespace App\Livewire\Inventory;
 
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Support\Audit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -76,7 +77,7 @@ class InventoryList extends Component
 
             $product->update(['stock_quantity' => $after]);
 
-            StockMovement::query()->create([
+            $movement = StockMovement::query()->create([
                 'product_id' => $product->id,
                 'user_id' => auth()->id(),
                 'type' => $validated['type'],
@@ -86,6 +87,20 @@ class InventoryList extends Component
                 'reference' => filled($validated['reference']) ? trim($validated['reference']) : null,
                 'reason' => trim($validated['reason']),
             ]);
+
+            Audit::record(
+                'inventory.movement',
+                $movement,
+                'Manual inventory movement recorded for '.$product->name,
+                [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'movement_type' => $movement->type,
+                    'quantity' => $movement->quantity,
+                    'stock_before' => $before,
+                    'stock_after' => $after,
+                ],
+            );
         });
 
         if ($this->getErrorBag()->isNotEmpty()) {
