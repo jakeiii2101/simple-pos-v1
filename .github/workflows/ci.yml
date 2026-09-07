@@ -39,9 +39,6 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      - name: Run Laravel test suite
-        run: php artisan test
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -53,3 +50,6 @@ jobs:
 
       - name: Build frontend assets
         run: npm run build
+
+      - name: Run Laravel test suite
+        run: php artisan test
