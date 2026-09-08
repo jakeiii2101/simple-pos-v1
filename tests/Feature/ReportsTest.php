@@ -82,7 +82,7 @@ class ReportsTest extends TestCase
             'sale_id' => $sale->id,
             'method' => Payment::METHOD_GCASH,
             'amount' => 200,
-            'amount_tendered' => 0,
+            'amount_tendered' => 200,
             'change_due' => 0,
             'reference' => 'GCASH-REPORT-001',
         ]);
