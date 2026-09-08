@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/sniperpos-uiux-system
   pull_request:
     branches:
       - main
@@ -50,6 +49,11 @@ jobs:
 
       - name: Build frontend assets
         run: npm run build
+
+      - name: Verify clean migrations
+        run: |
+          touch database/database.sqlite
+          DB_CONNECTION=sqlite DB_DATABASE="$GITHUB_WORKSPACE/database/database.sqlite" php artisan migrate:fresh --force
 
       - name: Run Laravel test suite
         run: php artisan test

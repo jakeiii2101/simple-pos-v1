@@ -4,6 +4,7 @@ namespace App\Livewire\Products;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\Audit;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -96,11 +97,62 @@ class ProductList extends Component
         ];
 
         if ($this->editingId !== null) {
-            Product::query()->findOrFail($this->editingId)->update($data);
+            $product = Product::query()->findOrFail($this->editingId);
+            $before = $product->only([
+                'category_id',
+                'sku',
+                'barcode',
+                'name',
+                'cost_price',
+                'selling_price',
+                'low_stock_level',
+                'status',
+            ]);
+            $oldSellingPrice = (string) $product->selling_price;
+
+            $product->update($data);
+            $product->refresh();
+
+            Audit::record(
+                'product.updated',
+                $product,
+                'Product updated.',
+                [
+                    'before' => $before,
+                    'after' => $product->only(array_keys($before)),
+                ],
+            );
+
+            if ($oldSellingPrice !== (string) $product->selling_price) {
+                Audit::record(
+                    'product.price_changed',
+                    $product,
+                    'Product selling price changed.',
+                    [
+                        'old_selling_price' => $oldSellingPrice,
+                        'new_selling_price' => (string) $product->selling_price,
+                    ],
+                );
+            }
+
             session()->flash('success', 'Product updated successfully.');
         } else {
             $data['stock_quantity'] = $validated['stockQuantity'];
-            Product::query()->create($data);
+            $product = Product::query()->create($data);
+
+            Audit::record(
+                'product.created',
+                $product,
+                'Product created.',
+                [
+                    'sku' => $product->sku,
+                    'name' => $product->name,
+                    'selling_price' => (string) $product->selling_price,
+                    'stock_quantity' => $product->stock_quantity,
+                    'status' => $product->status,
+                ],
+            );
+
             session()->flash('success', 'Product created successfully.');
         }
 
@@ -115,6 +167,16 @@ class ProductList extends Component
             session()->flash('error', 'This product has inventory history and cannot be deleted. Set it to inactive instead.');
             return;
         }
+
+        Audit::record(
+            'product.deleted',
+            $product,
+            'Product deleted before any inventory history existed.',
+            [
+                'sku' => $product->sku,
+                'name' => $product->name,
+            ],
+        );
 
         $product->delete();
 
