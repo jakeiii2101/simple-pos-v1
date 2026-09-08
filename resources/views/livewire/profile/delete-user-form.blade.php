@@ -1,37 +1,24 @@
 <?php
 
-use App\Livewire\Actions\Logout;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
 
 new class extends Component
 {
-    public string $password = '';
-
-    public function deleteUser(Logout $logout): void
-    {
-        $this->validate(['password' => ['required', 'string', 'current_password']]);
-        tap(Auth::user(), $logout(...))->delete();
-        $this->redirect('/', navigate: true);
-    }
+    // SniperPOS V1 intentionally does not expose self-service account deletion.
+    // User records are part of the audit and financial history. Administrators
+    // can disable access through User Management without removing history.
 }; ?>
 
-<section class="space-y-5">
+<section class="space-y-4">
     <header>
-        <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-sniper-red">Danger Zone</div>
-        <h2 class="mt-1 font-heading text-xl font-bold text-sniper-navy">Delete Account</h2>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-sniper-slate">Permanently removes your account and associated access. This action cannot be undone.</p>
+        <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-sniper-red">Account Protection</div>
+        <h2 class="mt-1 font-heading text-xl font-bold text-sniper-navy">Account deletion is disabled</h2>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-sniper-slate">
+            SniperPOS keeps user records so completed sales, inventory movements, and audit history remain attributable. If access should be removed, an administrator can set the account to inactive in User Management.
+        </p>
     </header>
 
-    <x-danger-button x-data="" x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')">{{ __('Delete Account') }}</x-danger-button>
-
-    <x-modal name="confirm-user-deletion" :show="$errors->isNotEmpty()" focusable>
-        <form wire:submit="deleteUser" class="p-6 sm:p-7">
-            <div class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-xl text-sniper-red ring-1 ring-red-200">!</div>
-            <h2 class="mt-4 font-heading text-xl font-bold text-sniper-navy">Are you sure?</h2>
-            <p class="mt-2 text-sm leading-6 text-sniper-slate">Once your account is deleted, its data and access are permanently removed. Enter your password to confirm.</p>
-            <div class="mt-6"><x-input-label for="password" value="{{ __('Password') }}" /><x-text-input wire:model="password" id="password" name="password" type="password" class="mt-1.5 block w-full" placeholder="Password" /><x-input-error :messages="$errors->get('password')" class="mt-2" /></div>
-            <div class="mt-6 flex flex-wrap justify-end gap-3"><x-secondary-button x-on:click="$dispatch('close')">{{ __('Cancel') }}</x-secondary-button><x-danger-button>{{ __('Delete Account') }}</x-danger-button></div>
-        </form>
-    </x-modal>
+    <div class="sniper-alert-info">
+        This preserves business and financial history while immediately allowing administrators to revoke future access.
+    </div>
 </section>
