@@ -1,6 +1,7 @@
-const CACHE_NAME = 'sniperpos-v1';
+const CACHE_NAME = 'sniperpos-v2';
+const OFFLINE_URL = '/offline.html';
 const APP_SHELL = [
-    '/',
+    OFFLINE_URL,
     '/manifest.webmanifest',
     '/icons/icon-192.png',
     '/icons/icon-512.png',
@@ -40,12 +41,21 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Authenticated HTML pages are always network-only. If the device is offline,
+    // show the static fallback instead of serving cached sales or business data.
     if (event.request.mode === 'navigate') {
         event.respondWith(
-            fetch(event.request)
-                .then((response) => response)
-                .catch(() => caches.match('/'))
+            fetch(event.request).catch(() => caches.match(OFFLINE_URL))
         );
+        return;
+    }
+
+    const isSafeStaticAsset =
+        requestUrl.pathname === '/manifest.webmanifest' ||
+        requestUrl.pathname.startsWith('/icons/') ||
+        requestUrl.pathname.startsWith('/build/');
+
+    if (! isSafeStaticAsset) {
         return;
     }
 
