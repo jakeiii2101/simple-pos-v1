@@ -35,6 +35,12 @@ class AuthenticationTest extends TestCase
             ->assertRedirect(route('dashboard', absolute: false));
 
         $this->assertAuthenticated();
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $user->id,
+            'action' => 'auth.login',
+            'auditable_type' => $user->getMorphClass(),
+            'auditable_id' => $user->id,
+        ]);
     }
 
     public function test_inactive_users_can_not_authenticate(): void
@@ -108,5 +114,11 @@ class AuthenticationTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $user->id,
+            'action' => 'auth.logout',
+            'auditable_type' => $user->getMorphClass(),
+            'auditable_id' => $user->id,
+        ]);
     }
 }
