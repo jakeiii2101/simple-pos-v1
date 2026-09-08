@@ -55,12 +55,20 @@ class ProductManagementTest extends TestCase
             ->call('save')
             ->assertHasNoErrors();
 
+        $product = Product::query()->where('sku', 'BABY-001')->firstOrFail();
+
         $this->assertDatabaseHas('products', [
-            'sku' => 'BABY-001',
+            'id' => $product->id,
             'barcode' => '480000000001',
             'name' => 'Baby Powder',
             'category_id' => $category->id,
             'stock_quantity' => 20,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $admin->id,
+            'action' => 'product.created',
+            'auditable_type' => $product->getMorphClass(),
+            'auditable_id' => $product->id,
         ]);
     }
 
@@ -96,7 +104,7 @@ class ProductManagementTest extends TestCase
             ->assertHasErrors(['sku' => 'unique']);
     }
 
-    public function test_product_can_be_updated_and_deleted(): void
+    public function test_product_update_price_change_and_delete_are_audited(): void
     {
         $admin = User::factory()->admin()->create();
         $category = Category::query()->create([
@@ -128,12 +136,24 @@ class ProductManagementTest extends TestCase
             'name' => 'Baby Powder 200g',
             'selling_price' => '70.00',
         ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'product.updated',
+            'auditable_id' => $product->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'product.price_changed',
+            'auditable_id' => $product->id,
+        ]);
 
         Livewire::actingAs($admin)
             ->test(ProductList::class)
             ->call('delete', $product->id);
 
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'product.deleted',
+            'auditable_id' => $product->id,
+        ]);
     }
 
     public function test_category_with_products_cannot_be_deleted(): void
