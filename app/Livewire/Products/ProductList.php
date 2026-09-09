@@ -34,6 +34,11 @@ class ProductList extends Component
 
     public bool $showForm = false;
 
+    public function mount(): void
+    {
+        $this->showForm = request()->boolean('create');
+    }
+
     public function boot(): void
     {
         abort_unless(
