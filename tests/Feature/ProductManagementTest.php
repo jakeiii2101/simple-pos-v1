@@ -23,6 +23,17 @@ class ProductManagementTest extends TestCase
             ->assertOk();
     }
 
+    public function test_products_page_can_open_directly_in_create_mode_from_pos(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get('/products?create=1')
+            ->assertOk()
+            ->assertSee('Product setup')
+            ->assertSee('Save Product');
+    }
+
     public function test_cashier_cannot_access_products_page(): void
     {
         $cashier = User::factory()->create();

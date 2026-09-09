@@ -59,13 +59,13 @@ return [
     | Application Timezone
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone is
-    | set to "UTC" by default as it is suitable for most use cases.
+    | SniperPOS is currently deployed for Philippine retail use. Keeping the
+    | timezone configurable lets reports, greetings, receipt timestamps and
+    | "today" boundaries follow the store's local clock instead of UTC.
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Asia/Manila'),
 
     /*
     |--------------------------------------------------------------------------

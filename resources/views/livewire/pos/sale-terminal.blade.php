@@ -4,6 +4,10 @@
             <div class="sniper-kicker">Checkout workspace</div>
             <h1 class="sniper-title mt-2">Point of Sale</h1>
             <p class="sniper-copy mt-2">Scan or search products, build the cart, and complete the sale with fewer clicks.</p>
+            <div class="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-sniper-slate ring-1 ring-slate-200">
+                <svg class="h-4 w-4 text-sniper-navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <span>{{ now()->format('M d, Y · h:i A') }} · {{ config('app.timezone') }}</span>
+            </div>
         </div>
         <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
             <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-sniper-navy font-heading text-xs font-bold text-white">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
@@ -34,11 +38,20 @@
                             <input id="pos-search" wire:model.live.debounce.250ms="search" type="text" class="sniper-input pl-11" placeholder="Scan barcode or type product name" autofocus autocomplete="off" />
                         </div>
                         <x-input-error :messages="$errors->get('search')" class="mt-2" />
+                        <p class="mt-2 text-[11px] text-sniper-slate">Press Enter to add an exact SKU/barcode match, or choose a product from the list below.</p>
                     </div>
-                    <button type="submit" class="sniper-btn-primary h-[42px] gap-2 px-5">
-                        <span>Add Product</span>
-                        <span aria-hidden="true">＋</span>
-                    </button>
+
+                    @if (auth()->user()->isAdmin())
+                        <a href="{{ route('products', [], false) }}?create=1" wire:navigate class="sniper-btn-primary h-[42px] gap-2 px-5" title="Create a new product">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                            <span>Add Product</span>
+                        </a>
+                    @else
+                        <button type="submit" class="sniper-btn-primary h-[42px] gap-2 px-5">
+                            <span>Add to Cart</span>
+                            <span aria-hidden="true">＋</span>
+                        </button>
+                    @endif
                 </form>
             </div>
 
@@ -79,21 +92,34 @@
 
         <section class="xl:sticky xl:top-24 xl:self-start">
             <div class="sniper-card overflow-hidden">
-                <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-                    <div>
-                        <div class="sniper-kicker">Current sale</div>
-                        <h2 class="mt-1 font-heading text-lg font-bold text-sniper-navy">Cart</h2>
+                <div class="border-b border-slate-200 px-5 py-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <div class="sniper-kicker">Current sale</div>
+                            <h2 class="mt-1 font-heading text-lg font-bold text-sniper-navy">Cart</h2>
+                        </div>
+                        @if ($cart)
+                            <button type="button" wire:click="clearCart" wire:confirm="Clear the current cart?" class="rounded-lg px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">Clear Cart</button>
+                        @endif
                     </div>
-                    @if ($cart)
-                        <button type="button" wire:click="clearCart" wire:confirm="Clear the current cart?" class="rounded-lg px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">Clear Cart</button>
-                    @endif
+
+                    <div class="mt-3 grid grid-cols-2 gap-2">
+                        <a href="#pos-discount" class="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ring-1 ring-red-100">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 19 19 5M7.5 7.5h.01M16.5 16.5h.01"/><circle cx="7.5" cy="7.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
+                            Discount
+                        </a>
+                        <a href="#pos-payment" class="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-sniper-navy ring-1 ring-slate-200">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+                            Cash · GCash · Card · Other
+                        </a>
+                    </div>
                 </div>
 
                 @error('cart')
                     <div class="mx-5 mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ $message }}</div>
                 @enderror
 
-                <div class="max-h-[420px] divide-y divide-slate-100 overflow-y-auto">
+                <div class="max-h-[360px] divide-y divide-slate-100 overflow-y-auto">
                     @forelse ($cart as $item)
                         <div wire:key="cart-{{ $item['id'] }}" class="px-5 py-4">
                             <div class="flex justify-between gap-4">
@@ -113,7 +139,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="px-5 py-12 text-center">
+                        <div class="px-5 py-10 text-center">
                             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-sniper-navy ring-1 ring-slate-200"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l2.4 10.2a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 1.9-1.4L21 7H6"/></svg></div>
                             <div class="mt-3 text-sm font-semibold text-sniper-navy">Your cart is empty</div>
                             <div class="mt-1 text-xs text-sniper-slate">Add a product to start the sale.</div>
@@ -122,18 +148,23 @@
                 </div>
 
                 <div class="border-t border-slate-200 bg-slate-50 px-5 py-5">
-                    @if ($cart)
-                        <div class="mb-5 rounded-xl border border-slate-200 bg-white p-4">
-                            <div class="flex items-center justify-between gap-3">
+                    <div id="pos-discount" class="mb-5 scroll-mt-24 rounded-xl border border-red-100 bg-white p-4 shadow-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2">
+                                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-sniper-red">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 19 19 5M7.5 7.5h.01M16.5 16.5h.01"/><circle cx="7.5" cy="7.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
+                                </span>
                                 <div>
                                     <div class="text-xs font-bold uppercase tracking-[0.12em] text-sniper-navy">Discount</div>
-                                    <div class="mt-1 text-[11px] text-sniper-slate">Apply a fixed amount or percentage before checkout.</div>
+                                    <div class="mt-0.5 text-[11px] text-sniper-slate">Fixed amount or percentage.</div>
                                 </div>
-                                @if ($appliedDiscountType)
-                                    <button type="button" wire:click="clearDiscount" class="shrink-0 text-xs font-semibold text-red-600 hover:text-red-700">Clear</button>
-                                @endif
                             </div>
+                            @if ($appliedDiscountType)
+                                <button type="button" wire:click="clearDiscount" class="shrink-0 text-xs font-semibold text-red-600 hover:text-red-700">Clear</button>
+                            @endif
+                        </div>
 
+                        @if ($cart)
                             <div class="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
                                 <div>
                                     <label for="discount-type" class="sniper-label">Type</label>
@@ -152,21 +183,23 @@
                                     <button type="button" wire:click="applyDiscount" class="sniper-btn-secondary h-[42px] w-full px-4 sm:w-auto">Apply</button>
                                 </div>
                             </div>
+                        @else
+                            <div class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-sniper-slate ring-1 ring-slate-200">Add an item to the cart to enable discounts.</div>
+                        @endif
 
-                            @if ($appliedDiscountType)
-                                <div class="mt-3 flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800 ring-1 ring-emerald-200">
-                                    <span class="font-semibold">Discount applied</span>
-                                    <span>
-                                        @if ($appliedDiscountType === 'percentage')
-                                            {{ number_format($appliedDiscountValue, 2) }}%
-                                        @else
-                                            ₱{{ number_format($appliedDiscountValue, 2) }}
-                                        @endif
-                                    </span>
-                                </div>
-                            @endif
-                        </div>
-                    @endif
+                        @if ($appliedDiscountType)
+                            <div class="mt-3 flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800 ring-1 ring-emerald-200">
+                                <span class="font-semibold">Discount applied</span>
+                                <span>
+                                    @if ($appliedDiscountType === 'percentage')
+                                        {{ number_format($appliedDiscountValue, 2) }}%
+                                    @else
+                                        ₱{{ number_format($appliedDiscountValue, 2) }}
+                                    @endif
+                                </span>
+                            </div>
+                        @endif
+                    </div>
 
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between text-sniper-slate"><span>Subtotal</span><span class="font-medium text-sniper-navy">₱{{ number_format($subtotal, 2) }}</span></div>
@@ -179,9 +212,27 @@
                         </div>
                     </div>
 
-                    <div class="mt-5 rounded-xl border border-slate-200 bg-white p-4">
-                        <div class="text-xs font-bold uppercase tracking-[0.12em] text-sniper-navy">Payment</div>
-                        <div class="mt-1 text-[11px] text-sniper-slate">Choose how the customer will settle this sale.</div>
+                    <div id="pos-payment" class="mt-5 scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-sniper-navy text-white">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+                            </span>
+                            <div>
+                                <div class="text-xs font-bold uppercase tracking-[0.12em] text-sniper-navy">Mode of Payment</div>
+                                <div class="mt-0.5 text-[11px] text-sniper-slate">Choose Cash, GCash, Card, or Other.</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            @foreach ([
+                                'cash' => 'Cash',
+                                'gcash' => 'GCash',
+                                'card' => 'Card',
+                                'other' => 'Other',
+                            ] as $methodValue => $methodLabel)
+                                <button type="button" wire:click="$set('paymentMethod', '{{ $methodValue }}')" class="rounded-lg px-2 py-2 text-xs font-semibold ring-1 transition {{ $paymentMethod === $methodValue ? 'bg-sniper-navy text-white ring-sniper-navy' : 'bg-white text-sniper-navy ring-slate-200 hover:ring-red-200' }}">{{ $methodLabel }}</button>
+                            @endforeach
+                        </div>
 
                         <div class="mt-3">
                             <label for="payment-method" class="sniper-label">Payment Method</label>
