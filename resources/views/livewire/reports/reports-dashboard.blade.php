@@ -4,6 +4,10 @@
             <div class="sniper-kicker">Business Intelligence</div>
             <h1 class="sniper-title mt-1">Reports</h1>
             <p class="sniper-subtitle">Track gross sales, discounts, net sales, payment mix, inventory position, and low-stock risk.</p>
+            <div class="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-sniper-slate ring-1 ring-slate-200">
+                <svg class="h-4 w-4 text-sniper-navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <span>Local reporting time: {{ now()->format('M d, Y · h:i A') }} · {{ config('app.timezone') }}</span>
+            </div>
         </div>
         <span class="sniper-badge-navy">Insights that matter</span>
     </div>
@@ -37,6 +41,63 @@
                 <div class="rounded-xl bg-red-50 p-4"><div class="text-[10px] font-bold uppercase tracking-[0.12em] text-red-600">Discounts</div><div class="mt-1 font-heading text-xl font-bold text-red-700">₱{{ number_format($monthlyDiscounts, 2) }}</div></div>
                 <div class="rounded-xl bg-emerald-50 p-4"><div class="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">Net Sales</div><div class="mt-1 font-heading text-xl font-bold text-emerald-800">₱{{ number_format($monthlyNetSales, 2) }}</div></div>
             </div>
+        </section>
+    </div>
+
+    <div class="mt-6 grid gap-6 xl:grid-cols-2">
+        @php
+            $dailyChartMax = max(1, max(array_column($dailySalesChart, 'value')));
+            $monthlyChartMax = max(1, max(array_column($monthlySalesChart, 'value')));
+        @endphp
+
+        <section class="sniper-card p-5 sm:p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <div class="sniper-kicker">Daily Sales Graph</div>
+                    <h2 class="mt-1 font-heading text-lg font-bold text-sniper-navy">Sales by Hour</h2>
+                    <p class="mt-1 text-sm text-sniper-slate">Net sales movement for the selected report date.</p>
+                </div>
+                <span class="sniper-badge-success">24 Hours</span>
+            </div>
+
+            <div class="mt-6 overflow-x-auto pb-2">
+                <div class="flex h-56 min-w-[720px] items-end gap-2 border-b border-slate-200 px-1">
+                    @foreach ($dailySalesChart as $index => $point)
+                        @php($height = max(3, ($point['value'] / $dailyChartMax) * 100))
+                        <div class="group flex h-full min-w-0 flex-1 flex-col justify-end" title="{{ $point['label'] }} — ₱{{ number_format($point['value'], 2) }}">
+                            <div class="mb-2 hidden text-center text-[10px] font-semibold text-sniper-navy group-hover:block">₱{{ number_format($point['value'], 0) }}</div>
+                            <div class="w-full rounded-t-md bg-sniper-navy/85 transition hover:bg-sniper-red" style="height: {{ $height }}%"></div>
+                            <div class="mt-2 h-5 text-center text-[9px] font-medium text-sniper-slate">{{ $index % 3 === 0 ? $point['label'] : '' }}</div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="mt-3 flex items-center justify-between text-xs text-sniper-slate"><span>12 AM</span><span>Local time · {{ config('app.timezone') }}</span><span>11 PM</span></div>
+        </section>
+
+        <section class="sniper-card p-5 sm:p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <div class="sniper-kicker">Monthly Sales Graph</div>
+                    <h2 class="mt-1 font-heading text-lg font-bold text-sniper-navy">Sales by Day</h2>
+                    <p class="mt-1 text-sm text-sniper-slate">Net sales movement across the selected month.</p>
+                </div>
+                <span class="sniper-badge-navy">{{ count($monthlySalesChart) }} Days</span>
+            </div>
+
+            <div class="mt-6 overflow-x-auto pb-2">
+                <div class="flex h-56 min-w-[760px] items-end gap-1.5 border-b border-slate-200 px-1">
+                    @foreach ($monthlySalesChart as $index => $point)
+                        @php($height = max(3, ($point['value'] / $monthlyChartMax) * 100))
+                        <div class="group flex h-full min-w-0 flex-1 flex-col justify-end" title="Day {{ $point['label'] }} — ₱{{ number_format($point['value'], 2) }}">
+                            <div class="mb-2 hidden text-center text-[10px] font-semibold text-sniper-navy group-hover:block">₱{{ number_format($point['value'], 0) }}</div>
+                            <div class="w-full rounded-t-md bg-sniper-red/80 transition hover:bg-sniper-navy" style="height: {{ $height }}%"></div>
+                            <div class="mt-2 h-5 text-center text-[9px] font-medium text-sniper-slate">{{ ($index === 0 || ($index + 1) % 5 === 0 || $index === count($monthlySalesChart) - 1) ? $point['label'] : '' }}</div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="mt-3 text-center text-xs text-sniper-slate">Day of month · hover a bar to inspect its net sales</div>
         </section>
     </div>
 
