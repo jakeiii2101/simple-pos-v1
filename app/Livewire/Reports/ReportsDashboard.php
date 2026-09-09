@@ -59,6 +59,53 @@ class ReportsDashboard extends Component
         return Carbon::createFromFormat('Y-m', $this->reportMonth)->startOfMonth();
     }
 
+    /** @return array<int, array{label:string,value:float}> */
+    private function dailySalesChart(Carbon $date): array
+    {
+        $values = array_fill(0, 24, 0.0);
+
+        Sale::query()
+            ->where('status', Sale::STATUS_COMPLETED)
+            ->whereBetween('completed_at', [$date->copy()->startOfDay(), $date->copy()->endOfDay()])
+            ->get(['completed_at', 'total'])
+            ->each(function (Sale $sale) use (&$values): void {
+                $hour = (int) $sale->completed_at->format('G');
+                $values[$hour] += (float) $sale->total;
+            });
+
+        return collect($values)
+            ->map(fn (float $value, int $hour) => [
+                'label' => Carbon::createFromTime($hour)->format('g A'),
+                'value' => round($value, 2),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** @return array<int, array{label:string,value:float}> */
+    private function monthlySalesChart(Carbon $month): array
+    {
+        $daysInMonth = $month->daysInMonth;
+        $values = array_fill(1, $daysInMonth, 0.0);
+
+        Sale::query()
+            ->where('status', Sale::STATUS_COMPLETED)
+            ->whereBetween('completed_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->get(['completed_at', 'total'])
+            ->each(function (Sale $sale) use (&$values): void {
+                $day = (int) $sale->completed_at->format('j');
+                $values[$day] += (float) $sale->total;
+            });
+
+        return collect($values)
+            ->map(fn (float $value, int $day) => [
+                'label' => (string) $day,
+                'value' => round($value, 2),
+            ])
+            ->values()
+            ->all();
+    }
+
     public function render()
     {
         $date = $this->safeDate();
@@ -122,6 +169,8 @@ class ReportsDashboard extends Component
             'monthlyDiscounts' => (float) ($monthly->discounts ?? 0),
             'monthlyNetSales' => (float) ($monthly->net_sales ?? 0),
             'monthlyTransactions' => (int) ($monthly->transactions ?? 0),
+            'dailySalesChart' => $this->dailySalesChart($date),
+            'monthlySalesChart' => $this->monthlySalesChart($month),
             'topProducts' => $topProducts,
             'paymentBreakdown' => $paymentBreakdown,
             'productCount' => (int) ($inventory->product_count ?? 0),
