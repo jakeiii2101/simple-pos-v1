@@ -4,6 +4,10 @@
             <div class="sniper-kicker">Business overview</div>
             <h1 class="sniper-title mt-2">Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 18 ? 'afternoon' : 'evening') }}, {{ explode(' ', auth()->user()->name)[0] }}.</h1>
             <p class="sniper-copy mt-2">Today’s live POS performance, inventory alerts, and recent activity in one view.</p>
+            <div class="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-sniper-slate ring-1 ring-slate-200">
+                <svg class="h-4 w-4 text-sniper-navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <span>{{ now()->format('l, M d, Y · h:i A') }} · {{ config('app.timezone') }}</span>
+            </div>
         </div>
         <a href="{{ route('pos', [], false) }}" wire:navigate class="sniper-btn-primary gap-2 self-start sm:self-auto">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l2.4 10.2a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 1.9-1.4L21 7H6m4 12h.01M18 19h.01"/></svg>
@@ -94,11 +98,35 @@
 
             @if(auth()->user()->isAdmin())
                 <section class="sniper-card p-5">
-                    <div class="sniper-kicker">Admin shortcuts</div>
+                    <div class="sniper-kicker">Quick Actions</div>
                     <div class="mt-4 grid grid-cols-2 gap-3">
-                        @foreach ([['inventory', 'Inventory'], ['sales', 'Sales'], ['reports', 'Reports'], ['products', 'Products']] as [$routeName, $label])
-                            <a href="{{ route($routeName, [], false) }}" wire:navigate class="rounded-xl border border-slate-200 bg-white px-3 py-3 text-center text-sm font-semibold text-sniper-navy hover:border-red-200 hover:text-sniper-red">{{ $label }}</a>
-                        @endforeach
+                        <a href="{{ route('inventory', [], false) }}" wire:navigate class="group rounded-xl border border-slate-200 bg-white px-3 py-4 text-center hover:border-red-200">
+                            <span class="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sniper-navy group-hover:bg-red-50 group-hover:text-sniper-red">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M5 7l1 13h12l1-13M9 11v5M15 11v5M9 4h6l1 3H8l1-3Z"/></svg>
+                            </span>
+                            <span class="mt-2 block text-sm font-semibold text-sniper-navy group-hover:text-sniper-red">Inventory</span>
+                        </a>
+
+                        <a href="{{ route('sales', [], false) }}" wire:navigate class="group rounded-xl border border-slate-200 bg-white px-3 py-4 text-center hover:border-red-200">
+                            <span class="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sniper-navy group-hover:bg-red-50 group-hover:text-sniper-red">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg>
+                            </span>
+                            <span class="mt-2 block text-sm font-semibold text-sniper-navy group-hover:text-sniper-red">Sales</span>
+                        </a>
+
+                        <a href="{{ route('reports', [], false) }}" wire:navigate class="group rounded-xl border border-slate-200 bg-white px-3 py-4 text-center hover:border-red-200">
+                            <span class="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sniper-navy group-hover:bg-red-50 group-hover:text-sniper-red">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+                            </span>
+                            <span class="mt-2 block text-sm font-semibold text-sniper-navy group-hover:text-sniper-red">Reports</span>
+                        </a>
+
+                        <a href="{{ route('products', [], false) }}" wire:navigate class="group rounded-xl border border-slate-200 bg-white px-3 py-4 text-center hover:border-red-200">
+                            <span class="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sniper-navy group-hover:bg-red-50 group-hover:text-sniper-red">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 8 4-8 4-8-4 8-4Zm-8 4v10l8 4 8-4V7m-8 4v10"/></svg>
+                            </span>
+                            <span class="mt-2 block text-sm font-semibold text-sniper-navy group-hover:text-sniper-red">Products</span>
+                        </a>
                     </div>
                 </section>
             @else
