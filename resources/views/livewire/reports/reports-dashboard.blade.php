@@ -123,15 +123,13 @@
             <div class="sniper-section-header"><div class="flex items-center justify-between gap-4"><div><h2 class="font-heading text-lg font-bold text-sniper-navy">Payment Mix</h2><p class="mt-1 text-sm text-sniper-slate">Net sales by payment method for the selected month.</p></div><span class="sniper-badge-navy">Payments</span></div></div>
             <div class="overflow-x-auto"><table class="sniper-table"><thead><tr><th>Method</th><th class="!text-right">Transactions</th><th class="!text-right">Net Sales</th></tr></thead><tbody>
                 @forelse ($paymentBreakdown as $payment)
-                    @php
-                        $methodLabel = match ($payment->method) {
-                            'gcash' => 'GCash',
-                            'card' => 'Card',
-                            'other' => 'Other',
-                            default => 'Cash',
-                        };
-                    @endphp
-                    <tr><td><span class="sniper-badge-neutral">{{ $methodLabel }}</span></td><td class="!text-right whitespace-nowrap">{{ number_format($payment->transactions) }}</td><td class="!text-right whitespace-nowrap font-bold !text-sniper-navy">₱{{ number_format((float) $payment->net_sales, 2) }}</td></tr>
+                    <tr>
+                        <td>
+                            <span class="sniper-badge-neutral">{{ match ($payment->method) { 'gcash' => 'GCash', 'card' => 'Card', 'other' => 'Other', default => 'Cash' } }}</span>
+                        </td>
+                        <td class="!text-right whitespace-nowrap">{{ number_format($payment->transactions) }}</td>
+                        <td class="!text-right whitespace-nowrap font-bold !text-sniper-navy">₱{{ number_format((float) $payment->net_sales, 2) }}</td>
+                    </tr>
                 @empty
                     <tr><td colspan="3" class="sniper-empty">No payment activity for the selected month.</td></tr>
                 @endforelse
