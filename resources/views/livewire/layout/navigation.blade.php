@@ -48,6 +48,7 @@ new class extends Component
                         ['route' => 'reports', 'label' => 'Reports', 'icon' => 'chart'],
                         ['route' => 'users', 'label' => 'Users', 'icon' => 'users'],
                         ['route' => 'audit-logs', 'label' => 'Audit Log', 'icon' => 'audit'],
+                        ['route' => 'settings.bir', 'label' => 'BIR Settings', 'icon' => 'settings'],
                     ]);
                 }
             @endphp

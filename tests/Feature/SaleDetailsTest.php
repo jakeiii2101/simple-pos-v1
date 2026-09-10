@@ -39,9 +39,11 @@ class SaleDetailsTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($cashier)
-            ->get(route('sales.receipt', ['sale' => $sale->id], false))
+            ->get(route('sales.invoice', ['sale' => $sale->id], false))
             ->assertOk()
             ->assertSee('SniperPOS')
+            ->assertSee('SALES INVOICE')
+            ->assertSee('TIN: 123-456-789-00000')
             ->assertSee('Cash Tendered')
             ->assertSee('New Sale');
     }
@@ -52,7 +54,7 @@ class SaleDetailsTest extends TestCase
         $sale = $this->createCompletedSale($admin, Payment::METHOD_CARD, 'CARD-AUTH-7788');
 
         $this->actingAs($admin)
-            ->get(route('sales.receipt', ['sale' => $sale->id], false))
+            ->get(route('sales.invoice', ['sale' => $sale->id], false))
             ->assertOk()
             ->assertSee('Precision in Every Sale.')
             ->assertSee('Card')
@@ -67,7 +69,7 @@ class SaleDetailsTest extends TestCase
         $sale = $this->createCompletedSale($admin, null);
 
         $this->actingAs($admin)
-            ->get(route('sales.receipt', ['sale' => $sale->id], false))
+            ->get(route('sales.invoice', ['sale' => $sale->id], false))
             ->assertOk()
             ->assertSee('Cash')
             ->assertSee('Cash Tendered');
@@ -97,8 +99,11 @@ class SaleDetailsTest extends TestCase
 
     private function createCompletedSale(User $cashier, ?string $method, ?string $reference = null): Sale
     {
+        $saleNumber = 'SI-'.strtoupper(bin2hex(random_bytes(4)));
+
         $sale = Sale::query()->create([
-            'sale_number' => 'TEST-'.strtoupper(bin2hex(random_bytes(4))),
+            'sale_number' => $saleNumber,
+            'invoice_number' => $saleNumber,
             'user_id' => $cashier->id,
             'subtotal' => 100,
             'discount_type' => Sale::DISCOUNT_PERCENTAGE,
@@ -109,6 +114,21 @@ class SaleDetailsTest extends TestCase
             'change_due' => $method === Payment::METHOD_CASH || $method === null ? 10 : 0,
             'status' => Sale::STATUS_COMPLETED,
             'completed_at' => now(),
+            'tax_type' => 'vat',
+            'vatable_sales' => 80.36,
+            'vat_amount' => 9.64,
+            'vat_exempt_sales' => 0,
+            'zero_rated_sales' => 0,
+            'non_vat_sales' => 0,
+            'seller_snapshot' => [
+                'registered_name' => 'Sniper Retail Corporation',
+                'trade_name' => 'Sniper Mart',
+                'tin' => '123-456-789-00000',
+                'branch_code' => '00000',
+                'registered_address' => 'General Santos City',
+                'tax_type' => 'vat',
+                'vat_rate' => '12.00',
+            ],
         ]);
 
         $sale->items()->create([

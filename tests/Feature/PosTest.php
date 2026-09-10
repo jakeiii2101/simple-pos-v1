@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Livewire\Pos\SaleTerminal;
+use App\Models\BirSetting;
 use App\Models\Category;
+use App\Models\InvoiceSequence;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
@@ -29,6 +31,7 @@ class PosTest extends TestCase
     public function test_completed_cash_sale_saves_payment_items_deducts_stock_and_audits(): void
     {
         $cashier = User::factory()->create();
+        $this->configureBirInvoicing();
         $product = $this->createProduct(
             sku: 'VICKS-001',
             name: 'Vicks VaporRub Extra Strong',
@@ -49,6 +52,10 @@ class PosTest extends TestCase
         $sale = Sale::query()->firstOrFail();
 
         $this->assertSame('240.00', $sale->subtotal);
+        $this->assertSame('SI-000000000001', $sale->invoice_number);
+        $this->assertSame('SI-000000000001', $sale->sale_number);
+        $this->assertSame('214.29', $sale->vatable_sales);
+        $this->assertSame('25.71', $sale->vat_amount);
         $this->assertNull($sale->discount_type);
         $this->assertSame('0.00', $sale->discount_amount);
         $this->assertSame('240.00', $sale->total);
@@ -87,6 +94,7 @@ class PosTest extends TestCase
     public function test_fixed_discount_is_applied_and_persisted_server_side(): void
     {
         $cashier = User::factory()->create();
+        $this->configureBirInvoicing();
         $product = $this->createProduct('FIXED-001', 'Fixed Discount Item', 200, 5);
 
         Livewire::actingAs($cashier)
@@ -114,6 +122,7 @@ class PosTest extends TestCase
     public function test_percentage_discount_is_applied_and_persisted_server_side(): void
     {
         $cashier = User::factory()->create();
+        $this->configureBirInvoicing();
         $product = $this->createProduct('PERCENT-001', 'Percentage Discount Item', 200, 5);
 
         Livewire::actingAs($cashier)
@@ -177,6 +186,7 @@ class PosTest extends TestCase
     public function test_checkout_recalculates_authoritative_price_and_discount_inside_transaction(): void
     {
         $cashier = User::factory()->create();
+        $this->configureBirInvoicing();
         $product = $this->createProduct('PRICE-001', 'Price Change Item', 100, 5);
 
         $component = Livewire::actingAs($cashier)
@@ -209,6 +219,7 @@ class PosTest extends TestCase
     public function test_gcash_checkout_creates_payment_reference_without_cash_change(): void
     {
         $cashier = User::factory()->create();
+        $this->configureBirInvoicing();
         $product = $this->createProduct('GCASH-001', 'GCash Item', 150, 5);
 
         Livewire::actingAs($cashier)
@@ -235,6 +246,8 @@ class PosTest extends TestCase
 
     public function test_card_and_other_payment_methods_are_supported(): void
     {
+        $this->configureBirInvoicing();
+
         foreach ([Payment::METHOD_CARD, Payment::METHOD_OTHER] as $index => $method) {
             $cashier = User::factory()->create();
             $product = $this->createProduct(
@@ -324,6 +337,28 @@ class PosTest extends TestCase
             'stock_quantity' => $stock,
             'low_stock_level' => 1,
             'status' => Product::STATUS_ACTIVE,
+        ]);
+    }
+
+    private function configureBirInvoicing(): void
+    {
+        BirSetting::query()->create([
+            'registered_name' => 'SniperPOS Test Store',
+            'tin' => '123-456-789-00000',
+            'branch_code' => '00000',
+            'registered_address' => 'General Santos City',
+            'tax_type' => BirSetting::TAX_TYPE_VAT,
+            'vat_rate' => 12,
+            'is_active' => true,
+        ]);
+
+        InvoiceSequence::query()->create([
+            'document_type' => InvoiceSequence::TYPE_SALES_INVOICE,
+            'branch_code' => '00000',
+            'prefix' => 'SI-',
+            'current_number' => 0,
+            'starting_number' => 1,
+            'is_active' => true,
         ]);
     }
 }

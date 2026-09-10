@@ -22,7 +22,7 @@
         <div class="mb-5 flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 sm:flex-row sm:items-center sm:justify-between">
             <span class="font-medium">{{ session('success') }}</span>
             @if ($lastSaleId)
-                <a href="{{ route('sales.receipt', ['sale' => $lastSaleId], false) }}" target="_blank" class="font-semibold underline underline-offset-4">Print receipt</a>
+                <a href="{{ route('sales.invoice', ['sale' => $lastSaleId], false) }}" target="_blank" class="font-semibold underline underline-offset-4">Print Sales Invoice</a>
             @endif
         </div>
     @endif

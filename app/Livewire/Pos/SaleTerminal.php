@@ -2,13 +2,14 @@
 
 namespace App\Livewire\Pos;
 
+use App\Models\BirSetting;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Support\Audit;
+use App\Support\InvoiceNumberService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
@@ -191,7 +192,7 @@ class SaleTerminal extends Component
         $this->resetErrorBag('discountValue');
     }
 
-    public function completeSale(): void
+    public function completeSale(InvoiceNumberService $invoiceNumberService): void
     {
         if ($this->cart === []) {
             $this->addError('cart', 'Add at least one product before completing the sale.');
@@ -221,7 +222,7 @@ class SaleTerminal extends Component
         $discountValue = $this->appliedDiscountValue;
         $paymentMethod = $validated['paymentMethod'];
 
-        $sale = DB::transaction(function () use ($validated, $discountType, $discountValue, $paymentMethod): Sale {
+        $sale = DB::transaction(function () use ($validated, $discountType, $discountValue, $paymentMethod, $invoiceNumberService): Sale {
             $lines = [];
             $subtotal = 0.0;
 
@@ -263,6 +264,18 @@ class SaleTerminal extends Component
                 $discountValue,
             );
             $total = round(max(0, $subtotal - $discountAmount), 2);
+            $invoice = $invoiceNumberService->next();
+            $birSetting = $invoice['setting'];
+
+            if ($birSetting->tax_type === BirSetting::TAX_TYPE_VAT) {
+                $vatableSales = round($total / (1 + ((float) $birSetting->vat_rate / 100)), 2);
+                $vatAmount = round($total - $vatableSales, 2);
+                $nonVatSales = 0.0;
+            } else {
+                $vatableSales = 0.0;
+                $vatAmount = 0.0;
+                $nonVatSales = $total;
+            }
 
             if ($paymentMethod === Payment::METHOD_CASH) {
                 $amountTendered = round((float) $validated['cashReceived'], 2);
@@ -293,7 +306,8 @@ class SaleTerminal extends Component
             }
 
             $sale = Sale::query()->create([
-                'sale_number' => 'POS-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4)),
+                'sale_number' => $invoice['invoice_number'],
+                'invoice_number' => $invoice['invoice_number'],
                 'user_id' => auth()->id(),
                 'subtotal' => $subtotal,
                 'discount_type' => $discountType,
@@ -304,6 +318,13 @@ class SaleTerminal extends Component
                 'change_due' => $saleChangeDue,
                 'status' => Sale::STATUS_COMPLETED,
                 'completed_at' => now(),
+                'tax_type' => $birSetting->tax_type,
+                'vatable_sales' => $vatableSales,
+                'vat_amount' => $vatAmount,
+                'vat_exempt_sales' => 0,
+                'zero_rated_sales' => 0,
+                'non_vat_sales' => $nonVatSales,
+                'seller_snapshot' => $birSetting->invoiceSnapshot(),
             ]);
 
             $sale->payment()->create([
@@ -347,6 +368,7 @@ class SaleTerminal extends Component
                 'POS sale completed: '.$sale->sale_number,
                 [
                     'sale_number' => $sale->sale_number,
+                    'invoice_number' => $sale->invoice_number,
                     'subtotal' => $subtotal,
                     'discount_amount' => $discountAmount,
                     'total' => $total,

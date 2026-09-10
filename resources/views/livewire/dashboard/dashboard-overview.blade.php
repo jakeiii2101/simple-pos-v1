@@ -66,7 +66,7 @@
                                     @if(auth()->user()->isAdmin())
                                         <a href="{{ route('sales.show', ['sale' => $sale->id], false) }}" wire:navigate class="sniper-action-link">Details</a>
                                     @else
-                                        <a href="{{ route('sales.receipt', ['sale' => $sale->id], false) }}" target="_blank" class="sniper-action-link">Receipt</a>
+                                        <a href="{{ route('sales.invoice', ['sale' => $sale->id], false) }}" target="_blank" class="sniper-action-link">Sales Invoice</a>
                                     @endif
                                 </td>
                             </tr>
@@ -134,7 +134,7 @@
                     <x-sniper-icon class="h-10 w-10 text-white" />
                     <div class="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-red-300">Cashier Workspace</div>
                     <h2 class="mt-2 font-heading text-xl font-bold text-white">Precision in Every Sale.</h2>
-                    <p class="mt-2 text-sm leading-6 text-slate-300">Use the POS for accurate checkout and immediate receipt access.</p>
+                    <p class="mt-2 text-sm leading-6 text-slate-300">Use the POS for accurate checkout and immediate Sales Invoice access.</p>
                 </section>
             @endif
         </div>

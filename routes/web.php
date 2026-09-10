@@ -8,6 +8,7 @@ use App\Livewire\Pos\SaleTerminal;
 use App\Livewire\Products\ProductList;
 use App\Livewire\Reports\ReportsDashboard;
 use App\Livewire\Sales\SalesHistory;
+use App\Livewire\Settings\BirSettings;
 use App\Livewire\Users\UserManagement;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Route;
@@ -25,11 +26,13 @@ Route::view('profile', 'profile')
 Route::middleware(['auth', 'active', 'role:admin,cashier'])->group(function () {
     Route::get('pos', SaleTerminal::class)->name('pos');
 
-    Route::get('sales/{sale}/receipt', function (Sale $sale) {
+    Route::get('sales/{sale}/invoice', function (Sale $sale) {
         $sale->load(['items', 'user', 'payment']);
 
         return view('sales.receipt', compact('sale'));
-    })->name('sales.receipt');
+    })->name('sales.invoice');
+
+    Route::get('sales/{sale}/receipt', fn (Sale $sale) => redirect()->route('sales.invoice', $sale));
 });
 
 Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
@@ -47,6 +50,7 @@ Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
     Route::get('reports', ReportsDashboard::class)->name('reports');
     Route::get('users', UserManagement::class)->name('users');
     Route::get('audit-logs', AuditLogList::class)->name('audit-logs');
+    Route::get('settings/bir', BirSettings::class)->name('settings.bir');
 });
 
 require __DIR__.'/auth.php';

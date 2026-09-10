@@ -12,6 +12,7 @@ use LogicException;
 
 #[Fillable([
     'sale_number',
+    'invoice_number',
     'user_id',
     'subtotal',
     'discount_type',
@@ -22,6 +23,13 @@ use LogicException;
     'change_due',
     'status',
     'completed_at',
+    'tax_type',
+    'vatable_sales',
+    'vat_amount',
+    'vat_exempt_sales',
+    'zero_rated_sales',
+    'non_vat_sales',
+    'seller_snapshot',
 ])]
 class Sale extends Model
 {
@@ -61,6 +69,7 @@ class Sale extends Model
 
             $protected = [
                 'sale_number',
+                'invoice_number',
                 'user_id',
                 'subtotal',
                 'discount_type',
@@ -71,6 +80,13 @@ class Sale extends Model
                 'change_due',
                 'status',
                 'completed_at',
+                'tax_type',
+                'vatable_sales',
+                'vat_amount',
+                'vat_exempt_sales',
+                'zero_rated_sales',
+                'non_vat_sales',
+                'seller_snapshot',
             ];
 
             if ($sale->isDirty($protected)) {
@@ -89,6 +105,12 @@ class Sale extends Model
             'cash_received' => 'decimal:2',
             'change_due' => 'decimal:2',
             'completed_at' => 'datetime',
+            'vatable_sales' => 'decimal:2',
+            'vat_amount' => 'decimal:2',
+            'vat_exempt_sales' => 'decimal:2',
+            'zero_rated_sales' => 'decimal:2',
+            'non_vat_sales' => 'decimal:2',
+            'seller_snapshot' => 'array',
         ];
     }
 }

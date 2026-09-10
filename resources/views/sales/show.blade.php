@@ -21,7 +21,7 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('sales', [], false) }}" wire:navigate class="sniper-btn-secondary">Back to Sales</a>
-                <a href="{{ route('sales.receipt', ['sale' => $sale->id], false) }}" target="_blank" class="sniper-btn-secondary">Print Receipt</a>
+                <a href="{{ route('sales.invoice', ['sale' => $sale->id], false) }}" target="_blank" class="sniper-btn-secondary">Print Sales Invoice</a>
                 <a href="{{ route('pos', [], false) }}" wire:navigate class="sniper-btn-primary">New Sale</a>
             </div>
         </div>
