@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SniperPOS Receipt {{ $sale->sale_number }}</title>
+    <title>Sales Invoice {{ $sale->invoice_number ?? $sale->sale_number }}</title>
     <style>
         :root { --navy: #0F2747; --red: #E50914; --slate: #64748B; --line: #CBD5E1; }
         * { box-sizing: border-box; }
@@ -11,7 +11,7 @@
         .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 18px auto; padding: 0 12px; }
         .actions a, .actions button { display: inline-flex; align-items: center; justify-content: center; padding: 10px 14px; border: 1px solid #cbd5e1; background: #fff; color: var(--navy); border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 13px; font-weight: 700; }
         .actions .primary { border-color: var(--red); background: var(--red); color: #fff; }
-        .receipt { width: 380px; max-width: calc(100% - 24px); margin: 0 auto 28px; background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 12px 30px rgba(15,39,71,.08); }
+        .receipt { width: 420px; max-width: calc(100% - 24px); margin: 0 auto 28px; background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 12px 30px rgba(15,39,71,.08); }
         .brand { display: flex; align-items: center; justify-content: center; gap: 10px; }
         .brand img { width: 38px; height: 38px; object-fit: contain; }
         .brand-name { margin: 0; color: var(--navy); font-size: 23px; font-weight: 800; letter-spacing: -.02em; }
@@ -47,13 +47,15 @@
         };
         $amountTendered = $payment?->amount_tendered ?? $sale->cash_received;
         $paymentChange = $payment?->change_due ?? $sale->change_due;
+        $seller = $sale->seller_snapshot ?? [];
+        $invoiceNumber = $sale->invoice_number ?? $sale->sale_number;
     @endphp
 
     <div class="actions">
         @if (auth()->user()?->isAdmin())
             <a href="{{ route('sales.show', ['sale' => $sale->id], false) }}">Sale Details</a>
         @endif
-        <button type="button" onclick="window.print()">Print Receipt</button>
+        <button type="button" onclick="window.print()">Print Sales Invoice</button>
         <a href="{{ route('pos', [], false) }}" class="primary">New Sale</a>
     </div>
 
@@ -64,11 +66,21 @@
                 <h1 class="brand-name">SniperPOS</h1>
             </div>
             <div class="tagline">Precision in Every Sale.</div>
-            <div class="muted" style="margin-top:8px;">Official Sales Receipt</div>
+            @if (! empty($seller['trade_name']))
+                <div style="margin-top:8px;font-weight:700;color:var(--navy);">{{ $seller['trade_name'] }}</div>
+            @endif
+            <div style="margin-top:5px;font-weight:800;">{{ $seller['registered_name'] ?? 'Seller details not configured' }}</div>
+            @if (! empty($seller['registered_address']))
+                <div class="muted" style="margin-top:3px;">{{ $seller['registered_address'] }}</div>
+            @endif
+            @if (! empty($seller['tin']))
+                <div class="muted" style="margin-top:3px;">TIN: {{ $seller['tin'] }} · Branch: {{ $seller['branch_code'] ?? '00000' }}</div>
+            @endif
+            <div style="margin-top:10px;font-size:14px;font-weight:800;letter-spacing:.08em;">SALES INVOICE</div>
         </div>
 
         <div class="section muted">
-            <div class="row"><span>Receipt</span><span>{{ $sale->sale_number }}</span></div>
+            <div class="row"><span>Invoice No.</span><span>{{ $invoiceNumber }}</span></div>
             <div class="row"><span>Date</span><span>{{ $sale->completed_at->format('Y-m-d H:i') }}</span></div>
             <div class="row"><span>Cashier</span><span>{{ $sale->user->name }}</span></div>
         </div>
@@ -102,6 +114,18 @@
         </div>
 
         <div class="section">
+            <div class="payment-label">Tax Breakdown</div>
+            @if ($sale->tax_type === 'vat')
+                <div class="row"><span>VATable Sales</span><span>₱{{ number_format((float) $sale->vatable_sales, 2) }}</span></div>
+                <div class="row"><span>VAT Amount</span><span>₱{{ number_format((float) $sale->vat_amount, 2) }}</span></div>
+                <div class="row"><span>VAT-Exempt Sales</span><span>₱{{ number_format((float) $sale->vat_exempt_sales, 2) }}</span></div>
+                <div class="row"><span>Zero-Rated Sales</span><span>₱{{ number_format((float) $sale->zero_rated_sales, 2) }}</span></div>
+            @else
+                <div class="row"><span>Non-VAT Sales</span><span>₱{{ number_format((float) ($sale->non_vat_sales ?: $sale->total), 2) }}</span></div>
+            @endif
+        </div>
+
+        <div class="section">
             <div class="payment-label">Payment</div>
             <div class="row"><span>Method</span><span>{{ $paymentLabel }}</span></div>
             @if ($payment?->reference)
@@ -116,7 +140,13 @@
 
         <div class="footer muted">
             <strong>Thank you for your purchase!</strong>
-            <div style="margin-top:4px;">SniperPOS · Precision in Every Sale.</div>
+            @if (! empty($seller['permit_number']))
+                <div style="margin-top:6px;">PTU / Acknowledgment No.: {{ $seller['permit_number'] }}</div>
+            @endif
+            @if (! empty($seller['invoice_footer']))
+                <div style="margin-top:6px;white-space:pre-line;">{{ $seller['invoice_footer'] }}</div>
+            @endif
+            <div style="margin-top:6px;">Generated by SniperPOS · Precision in Every Sale.</div>
         </div>
     </div>
 </body>

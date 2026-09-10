@@ -3,7 +3,7 @@
         <div>
             <div class="sniper-kicker">Transactions</div>
             <h1 class="sniper-title mt-1">Sales History</h1>
-            <p class="sniper-subtitle">Review completed sales, trace receipts, and filter transaction history quickly.</p>
+            <p class="sniper-subtitle">Review completed sales, trace Sales Invoices, and filter transaction history quickly.</p>
         </div>
         <a href="{{ route('pos', [], false) }}" wire:navigate class="sniper-btn-primary">Open POS</a>
     </div>
@@ -52,7 +52,7 @@
     </div>
 
     <div class="sniper-table-wrap mt-6">
-        <div class="sniper-section-header"><h2 class="font-heading text-base font-bold text-sniper-navy">Completed Transactions</h2><p class="mt-1 text-xs text-sniper-slate">Open transaction details or a print-ready receipt.</p></div>
+        <div class="sniper-section-header"><h2 class="font-heading text-base font-bold text-sniper-navy">Completed Transactions</h2><p class="mt-1 text-xs text-sniper-slate">Open transaction details or a print-ready Sales Invoice.</p></div>
         <table class="sniper-table">
             <thead><tr><th>Receipt</th><th>Date</th><th>Cashier</th><th>Payment</th><th class="!text-right">Items</th><th class="!text-right">Total</th><th class="!text-right">Action</th></tr></thead>
             <tbody>
@@ -76,7 +76,7 @@
                         <td class="!text-right whitespace-nowrap">
                             <div class="flex justify-end gap-3">
                                 <a href="{{ route('sales.show', ['sale' => $sale->id], false) }}" wire:navigate class="sniper-action-link">Details</a>
-                                <a href="{{ route('sales.receipt', ['sale' => $sale->id], false) }}" target="_blank" class="sniper-action-link">Receipt</a>
+                                <a href="{{ route('sales.invoice', ['sale' => $sale->id], false) }}" target="_blank" class="sniper-action-link">Sales Invoice</a>
                             </div>
                         </td>
                     </tr>
