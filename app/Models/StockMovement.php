@@ -29,6 +29,10 @@ class StockMovement extends Model
 
     public const TYPE_SALE = 'sale';
 
+    public const TYPE_VOID = 'void';
+
+    public const TYPE_REFUND = 'refund';
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

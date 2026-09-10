@@ -27,7 +27,7 @@ Route::middleware(['auth', 'active', 'role:admin,cashier'])->group(function () {
     Route::get('pos', SaleTerminal::class)->name('pos');
 
     Route::get('sales/{sale}/invoice', function (Sale $sale) {
-        $sale->load(['items', 'user', 'payment']);
+        $sale->load(['items', 'user', 'payment', 'adjustment.authorizedBy']);
 
         return view('sales.receipt', compact('sale'));
     })->name('sales.invoice');
@@ -42,7 +42,7 @@ Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
     Route::get('sales', SalesHistory::class)->name('sales');
 
     Route::get('sales/{sale}', function (Sale $sale) {
-        $sale->load(['items', 'user', 'payment']);
+        $sale->load(['items', 'user', 'payment', 'adjustment.authorizedBy']);
 
         return view('sales.show', compact('sale'));
     })->name('sales.show');

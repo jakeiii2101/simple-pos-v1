@@ -66,6 +66,7 @@ class ReportsDashboard extends Component
 
         Sale::query()
             ->where('status', Sale::STATUS_COMPLETED)
+            ->whereDoesntHave('adjustment')
             ->whereBetween('completed_at', [$date->copy()->startOfDay(), $date->copy()->endOfDay()])
             ->get(['completed_at', 'total'])
             ->each(function (Sale $sale) use (&$values): void {
@@ -90,6 +91,7 @@ class ReportsDashboard extends Component
 
         Sale::query()
             ->where('status', Sale::STATUS_COMPLETED)
+            ->whereDoesntHave('adjustment')
             ->whereBetween('completed_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
             ->get(['completed_at', 'total'])
             ->each(function (Sale $sale) use (&$values): void {
@@ -115,12 +117,14 @@ class ReportsDashboard extends Component
 
         $daily = Sale::query()
             ->where('status', Sale::STATUS_COMPLETED)
+            ->whereDoesntHave('adjustment')
             ->whereDate('completed_at', $date->toDateString())
             ->selectRaw('COUNT(*) as transactions, COALESCE(SUM(subtotal), 0) as gross_sales, COALESCE(SUM(discount_amount), 0) as discounts, COALESCE(SUM(total), 0) as net_sales')
             ->first();
 
         $monthly = Sale::query()
             ->where('status', Sale::STATUS_COMPLETED)
+            ->whereDoesntHave('adjustment')
             ->whereBetween('completed_at', [$monthStart, $monthEnd])
             ->selectRaw('COUNT(*) as transactions, COALESCE(SUM(subtotal), 0) as gross_sales, COALESCE(SUM(discount_amount), 0) as discounts, COALESCE(SUM(total), 0) as net_sales')
             ->first();
@@ -128,6 +132,8 @@ class ReportsDashboard extends Component
         $topProducts = DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', Sale::STATUS_COMPLETED)
+            ->leftJoin('sale_adjustments', 'sale_adjustments.sale_id', '=', 'sales.id')
+            ->whereNull('sale_adjustments.id')
             ->whereBetween('sales.completed_at', [$monthStart, $monthEnd])
             ->select(
                 'sale_items.product_name',
@@ -143,6 +149,8 @@ class ReportsDashboard extends Component
         $paymentBreakdown = DB::table('sales')
             ->leftJoin('payments', 'payments.sale_id', '=', 'sales.id')
             ->where('sales.status', Sale::STATUS_COMPLETED)
+            ->leftJoin('sale_adjustments', 'sale_adjustments.sale_id', '=', 'sales.id')
+            ->whereNull('sale_adjustments.id')
             ->whereBetween('sales.completed_at', [$monthStart, $monthEnd])
             ->selectRaw("COALESCE(payments.method, 'cash') as method, COUNT(*) as transactions, COALESCE(SUM(sales.total), 0) as net_sales")
             ->groupBy(DB::raw("COALESCE(payments.method, 'cash')"))

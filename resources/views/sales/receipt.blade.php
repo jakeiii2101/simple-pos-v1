@@ -60,6 +60,12 @@
     </div>
 
     <div class="receipt">
+        @if ($sale->adjustment)
+            <div style="margin-bottom:14px;border:3px solid #b91c1c;padding:10px;text-align:center;color:#b91c1c;font-size:18px;font-weight:900;letter-spacing:.12em;">
+                {{ strtoupper($sale->adjustment->type) }}ED
+                <div style="margin-top:4px;font-size:10px;letter-spacing:normal;font-weight:600;">{{ $sale->adjustment->processed_at->format('Y-m-d H:i') }} · {{ $sale->adjustment->reason }}</div>
+            </div>
+        @endif
         <div class="center">
             <div class="brand">
                 <img src="/icons/simple-pos-icon.svg" alt="SniperPOS">

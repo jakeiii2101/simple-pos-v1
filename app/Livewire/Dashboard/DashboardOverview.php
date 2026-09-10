@@ -26,6 +26,7 @@ class DashboardOverview extends Component
 
         $todayQuery = Sale::query()
             ->where('status', Sale::STATUS_COMPLETED)
+            ->whereDoesntHave('adjustment')
             ->whereBetween('completed_at', [$todayStart, $todayEnd]);
 
         $today = (clone $todayQuery)
@@ -35,6 +36,8 @@ class DashboardOverview extends Component
         $itemsSoldToday = (int) DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', Sale::STATUS_COMPLETED)
+            ->leftJoin('sale_adjustments', 'sale_adjustments.sale_id', '=', 'sales.id')
+            ->whereNull('sale_adjustments.id')
             ->whereBetween('sales.completed_at', [$todayStart, $todayEnd])
             ->sum('sale_items.quantity');
 
@@ -43,7 +46,7 @@ class DashboardOverview extends Component
             ->count();
 
         $recentSales = Sale::query()
-            ->with(['user', 'payment'])
+            ->with(['user', 'payment', 'adjustment'])
             ->where('status', Sale::STATUS_COMPLETED)
             ->latest('completed_at')
             ->limit(6)
@@ -52,6 +55,8 @@ class DashboardOverview extends Component
         $topProductsToday = DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', Sale::STATUS_COMPLETED)
+            ->leftJoin('sale_adjustments', 'sale_adjustments.sale_id', '=', 'sales.id')
+            ->whereNull('sale_adjustments.id')
             ->whereBetween('sales.completed_at', [$todayStart, $todayEnd])
             ->select(
                 'sale_items.product_name',

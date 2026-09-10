@@ -67,12 +67,12 @@
                         };
                     @endphp
                     <tr wire:key="sale-{{ $sale->id }}">
-                        <td class="whitespace-nowrap font-semibold !text-sniper-navy">{{ $sale->sale_number }}</td>
+                        <td class="whitespace-nowrap font-semibold !text-sniper-navy">{{ $sale->sale_number }}@if($sale->adjustment)<div class="mt-1"><span class="sniper-badge-danger">{{ strtoupper($sale->adjustment->type) }}</span></div>@endif</td>
                         <td class="whitespace-nowrap">{{ $sale->completed_at->format('Y-m-d H:i') }}</td>
                         <td>{{ $sale->user->name }}</td>
                         <td><span class="sniper-badge-neutral">{{ $methodLabel }}</span></td>
                         <td class="!text-right whitespace-nowrap">{{ number_format($sale->items->sum('quantity')) }}</td>
-                        <td class="!text-right whitespace-nowrap font-bold !text-sniper-navy">₱{{ number_format((float) $sale->total, 2) }}</td>
+                        <td class="!text-right whitespace-nowrap font-bold {{ $sale->adjustment ? '!text-red-600 line-through' : '!text-sniper-navy' }}">₱{{ number_format((float) $sale->total, 2) }}</td>
                         <td class="!text-right whitespace-nowrap">
                             <div class="flex justify-end gap-3">
                                 <a href="{{ route('sales.show', ['sale' => $sale->id], false) }}" wire:navigate class="sniper-action-link">Details</a>
