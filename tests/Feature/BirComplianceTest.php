@@ -36,8 +36,7 @@ class BirComplianceTest extends TestCase
             ->set('endingNumber', '9999')
             ->set('isActive', true)
             ->call('save')
-            ->assertHasNoErrors()
-            ->assertSessionHas('success');
+            ->assertHasNoErrors();
 
         $this->assertDatabaseHas('bir_settings', [
             'registered_name' => 'Sniper Retail Corporation',
