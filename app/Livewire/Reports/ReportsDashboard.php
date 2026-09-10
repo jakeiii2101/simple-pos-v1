@@ -4,6 +4,7 @@ namespace App\Livewire\Reports;
 
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\SaleAdjustment;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -129,6 +130,25 @@ class ReportsDashboard extends Component
             ->selectRaw('COUNT(*) as transactions, COALESCE(SUM(subtotal), 0) as gross_sales, COALESCE(SUM(discount_amount), 0) as discounts, COALESCE(SUM(total), 0) as net_sales')
             ->first();
 
+        $birTaxSummary = Sale::query()
+            ->where('status', Sale::STATUS_COMPLETED)
+            ->whereDoesntHave('adjustment')
+            ->whereBetween('completed_at', [$monthStart, $monthEnd])
+            ->selectRaw('COALESCE(SUM(vatable_sales), 0) as vatable_sales, COALESCE(SUM(vat_amount), 0) as vat_amount, COALESCE(SUM(vat_exempt_sales), 0) as vat_exempt_sales, COALESCE(SUM(zero_rated_sales), 0) as zero_rated_sales, COALESCE(SUM(non_vat_sales), 0) as non_vat_sales, COALESCE(SUM(vat_exemption_amount), 0) as vat_exemptions')
+            ->first();
+
+        $reversalSummary = SaleAdjustment::query()
+            ->whereBetween('processed_at', [$monthStart, $monthEnd])
+            ->selectRaw("COUNT(*) as reversal_count, COALESCE(SUM(amount), 0) as reversal_amount, COALESCE(SUM(CASE WHEN type = 'void' THEN amount ELSE 0 END), 0) as void_amount, COALESCE(SUM(CASE WHEN type = 'refund' THEN amount ELSE 0 END), 0) as refund_amount")
+            ->first();
+
+        $recentReversals = SaleAdjustment::query()
+            ->with(['sale', 'authorizedBy'])
+            ->whereBetween('processed_at', [$monthStart, $monthEnd])
+            ->latest('processed_at')
+            ->limit(20)
+            ->get();
+
         $topProducts = DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', Sale::STATUS_COMPLETED)
@@ -185,6 +205,20 @@ class ReportsDashboard extends Component
             'unitsOnHand' => (int) ($inventory->units_on_hand ?? 0),
             'inventoryCost' => (float) ($inventory->inventory_cost ?? 0),
             'lowStockProducts' => $lowStockProducts,
+            'vatableSales' => (float) ($birTaxSummary->vatable_sales ?? 0),
+            'vatAmount' => (float) ($birTaxSummary->vat_amount ?? 0),
+            'vatExemptSales' => (float) ($birTaxSummary->vat_exempt_sales ?? 0),
+            'zeroRatedSales' => (float) ($birTaxSummary->zero_rated_sales ?? 0),
+            'nonVatSales' => (float) ($birTaxSummary->non_vat_sales ?? 0),
+            'vatExemptions' => (float) ($birTaxSummary->vat_exemptions ?? 0),
+            'reversalCount' => (int) ($reversalSummary->reversal_count ?? 0),
+            'reversalAmount' => (float) ($reversalSummary->reversal_amount ?? 0),
+            'voidAmount' => (float) ($reversalSummary->void_amount ?? 0),
+            'refundAmount' => (float) ($reversalSummary->refund_amount ?? 0),
+            'recentReversals' => $recentReversals,
+            'exportFrom' => $monthStart->toDateString(),
+            'exportTo' => $monthEnd->toDateString(),
+            'reportMonthLabel' => $monthStart->format('F Y'),
         ]);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ReportsExportController;
 use App\Livewire\Audit\AuditLogList;
 use App\Livewire\Categories\CategoryList;
 use App\Livewire\Dashboard\DashboardOverview;
@@ -48,6 +49,8 @@ Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
     })->name('sales.show');
 
     Route::get('reports', ReportsDashboard::class)->name('reports');
+    Route::get('reports/export/bir-sales', [ReportsExportController::class, 'sales'])->name('reports.export.sales');
+    Route::get('reports/export/reversals', [ReportsExportController::class, 'reversals'])->name('reports.export.reversals');
     Route::get('users', UserManagement::class)->name('users');
     Route::get('audit-logs', AuditLogList::class)->name('audit-logs');
     Route::get('settings/bir', BirSettings::class)->name('settings.bir');

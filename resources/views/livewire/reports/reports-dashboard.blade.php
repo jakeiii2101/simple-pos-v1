@@ -44,6 +44,43 @@
         </section>
     </div>
 
+    <section class="sniper-card mt-6 overflow-hidden">
+        <div class="sniper-section-header">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div><div class="sniper-kicker">BIR Sales Summary</div><h2 class="mt-1 font-heading text-lg font-bold text-sniper-navy">Tax Breakdown — {{ $reportMonthLabel }}</h2><p class="mt-1 text-xs text-sniper-slate">Active completed invoices only. Voided and refunded transactions are retained in the register below.</p></div>
+                <div class="flex flex-wrap gap-2"><a href="{{ route('reports.export.sales', ['from' => $exportFrom, 'to' => $exportTo], false) }}" class="sniper-btn-secondary">Download BIR Sales CSV</a><a href="{{ route('reports.export.reversals', ['from' => $exportFrom, 'to' => $exportTo], false) }}" class="sniper-btn-secondary">Download Reversal CSV</a></div>
+            </div>
+        </div>
+        <div class="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            @foreach ([
+                ['VATable Sales', $vatableSales],
+                ['VAT Amount', $vatAmount],
+                ['VAT-Exempt Sales', $vatExemptSales],
+                ['Zero-Rated Sales', $zeroRatedSales],
+                ['Non-VAT Sales', $nonVatSales],
+                ['VAT Exemptions', $vatExemptions],
+            ] as [$label, $value])
+                <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200"><div class="text-[10px] font-bold uppercase tracking-[0.1em] text-sniper-slate">{{ $label }}</div><div class="mt-2 font-heading text-lg font-bold text-sniper-navy">₱{{ number_format($value, 2) }}</div></div>
+            @endforeach
+        </div>
+    </section>
+
+    <section class="sniper-section mt-6">
+        <div class="sniper-section-header">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div><h2 class="font-heading text-lg font-bold text-sniper-navy">Void and Refund Register</h2><p class="mt-1 text-sm text-sniper-slate">{{ number_format($reversalCount) }} reversal(s) totaling ₱{{ number_format($reversalAmount, 2) }} for the selected month.</p></div>
+                <div class="flex gap-2"><span class="sniper-badge-danger">Voids ₱{{ number_format($voidAmount, 2) }}</span><span class="sniper-badge-warning">Refunds ₱{{ number_format($refundAmount, 2) }}</span></div>
+            </div>
+        </div>
+        <div class="overflow-x-auto"><table class="sniper-table"><thead><tr><th>Date</th><th>Invoice</th><th>Type</th><th>Reason</th><th>Authorized By</th><th class="!text-right">Amount</th></tr></thead><tbody>
+            @forelse ($recentReversals as $adjustment)
+                <tr><td class="whitespace-nowrap">{{ $adjustment->processed_at->format('Y-m-d H:i') }}</td><td class="font-semibold !text-sniper-navy">{{ $adjustment->sale->invoice_number ?? $adjustment->sale->sale_number }}</td><td><span class="{{ $adjustment->type === 'void' ? 'sniper-badge-danger' : 'sniper-badge-warning' }}">{{ strtoupper($adjustment->type) }}</span></td><td class="max-w-sm">{{ $adjustment->reason }}</td><td>{{ $adjustment->authorizedBy->name }}</td><td class="!text-right whitespace-nowrap font-bold !text-red-700">₱{{ number_format((float) $adjustment->amount, 2) }}</td></tr>
+            @empty
+                <tr><td colspan="6" class="sniper-empty">No voids or refunds for the selected month.</td></tr>
+            @endforelse
+        </tbody></table></div>
+    </section>
+
     <div class="mt-6 grid gap-6 xl:grid-cols-2">
         @php
             $dailyChartMax = max(1, max(array_column($dailySalesChart, 'value')));
