@@ -7,6 +7,7 @@ use App\Models\InvoiceSequence;
 use App\Support\Audit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -118,13 +119,15 @@ class BirSettings extends Component
             $startingNumber = (int) $validated['startingNumber'];
 
             if ($sequence !== null && $sequence->current_number > 0 && $startingNumber !== $sequence->starting_number) {
-                $this->addError('startingNumber', 'Starting number cannot be changed after an invoice has been issued.');
-                return;
+                throw ValidationException::withMessages([
+                    'startingNumber' => 'Starting number cannot be changed after an invoice has been issued.',
+                ]);
             }
 
             if ($sequence !== null && $sequence->current_number > 0 && $validated['invoicePrefix'] !== $sequence->prefix) {
-                $this->addError('invoicePrefix', 'Invoice prefix cannot be changed after an invoice has been issued.');
-                return;
+                throw ValidationException::withMessages([
+                    'invoicePrefix' => 'Invoice prefix cannot be changed after an invoice has been issued.',
+                ]);
             }
 
             BirSetting::query()->update(['is_active' => false]);
@@ -174,9 +177,7 @@ class BirSettings extends Component
             );
         });
 
-        if ($this->getErrorBag()->isEmpty()) {
-            session()->flash('success', 'BIR settings saved successfully.');
-        }
+        session()->flash('success', 'BIR settings saved successfully.');
     }
 
     private function nullableString(mixed $value): ?string
