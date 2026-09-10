@@ -7,10 +7,12 @@ use App\Livewire\Dashboard\DashboardOverview;
 use App\Livewire\Inventory\InventoryList;
 use App\Livewire\Pos\SaleTerminal;
 use App\Livewire\Products\ProductList;
+use App\Livewire\Reports\DailyReadings;
 use App\Livewire\Reports\ReportsDashboard;
 use App\Livewire\Sales\SalesHistory;
 use App\Livewire\Settings\BirSettings;
 use App\Livewire\Users\UserManagement;
+use App\Models\DailyClosing;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Route;
 
@@ -49,6 +51,12 @@ Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
     })->name('sales.show');
 
     Route::get('reports', ReportsDashboard::class)->name('reports');
+    Route::get('daily-readings', DailyReadings::class)->name('daily-readings');
+    Route::get('daily-readings/{dailyClosing}/print', function (DailyClosing $dailyClosing) {
+        $dailyClosing->load('closedBy');
+
+        return view('reports.daily-closing', compact('dailyClosing'));
+    })->name('daily-readings.print');
     Route::get('reports/export/bir-sales', [ReportsExportController::class, 'sales'])->name('reports.export.sales');
     Route::get('reports/export/reversals', [ReportsExportController::class, 'reversals'])->name('reports.export.reversals');
     Route::get('users', UserManagement::class)->name('users');
