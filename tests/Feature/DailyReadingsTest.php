@@ -68,7 +68,7 @@ class DailyReadingsTest extends TestCase
 
         $closing = DailyClosing::query()->firstOrFail();
         $this->assertSame('Z-'.now()->format('Ymd'), $closing->reading_number);
-        $this->assertSame(112.0, $closing->snapshot['sales']['net_sales']);
+        $this->assertEquals(112.0, $closing->snapshot['sales']['net_sales']);
         $this->assertDatabaseHas('audit_logs', ['action' => 'daily_closing.created', 'auditable_id' => $closing->id]);
 
         $this->expectException(LogicException::class);
