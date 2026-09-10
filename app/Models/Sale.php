@@ -65,6 +65,11 @@ class Sale extends Model
         return $this->hasOne(Payment::class);
     }
 
+    public function adjustment(): HasOne
+    {
+        return $this->hasOne(SaleAdjustment::class);
+    }
+
     protected static function booted(): void
     {
         static::deleting(function (Sale $sale): void {

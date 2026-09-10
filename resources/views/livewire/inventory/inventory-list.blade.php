@@ -36,7 +36,7 @@
                     <tr wire:key="movement-{{ $movement->id }}">
                         <td class="whitespace-nowrap">{{ $movement->created_at->format('M d, Y H:i') }}</td>
                         <td><div class="font-semibold text-sniper-navy">{{ $movement->product->name }}</div><div class="mt-0.5 text-xs text-sniper-slate">{{ $movement->product->sku }}</div></td>
-                        <td>@if($movement->type === 'stock_in')<span class="sniper-badge-success">Stock In</span>@elseif($movement->type === 'stock_out')<span class="sniper-badge-danger">Stock Out</span>@else<span class="sniper-badge-warning">Adjustment</span>@endif</td>
+                        <td>@if($movement->type === 'stock_in')<span class="sniper-badge-success">Stock In</span>@elseif($movement->type === 'stock_out')<span class="sniper-badge-danger">Stock Out</span>@elseif($movement->type === 'void')<span class="sniper-badge-danger">Sale Void</span>@elseif($movement->type === 'refund')<span class="sniper-badge-warning">Refund Return</span>@else<span class="sniper-badge-warning">Adjustment</span>@endif</td>
                         <td class="!text-right whitespace-nowrap font-bold {{ $movement->quantity >= 0 ? 'text-emerald-700' : 'text-sniper-red' }}">{{ $movement->quantity > 0 ? '+' : '' }}{{ $movement->quantity }}</td>
                         <td class="!text-right whitespace-nowrap">{{ $movement->stock_before }}</td>
                         <td class="!text-right whitespace-nowrap font-semibold !text-sniper-navy">{{ $movement->stock_after }}</td>
