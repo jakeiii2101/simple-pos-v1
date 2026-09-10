@@ -156,7 +156,7 @@
                                 </span>
                                 <div>
                                     <div class="text-xs font-bold uppercase tracking-[0.12em] text-sniper-navy">Discount</div>
-                                    <div class="mt-0.5 text-[11px] text-sniper-slate">Fixed amount or percentage.</div>
+                                    <div class="mt-0.5 text-[11px] text-sniper-slate">Promotional or statutory discount.</div>
                                 </div>
                             </div>
                             @if ($appliedDiscountType)
@@ -171,14 +171,20 @@
                                     <select id="discount-type" wire:model="discountType" class="sniper-input">
                                         <option value="fixed">Fixed amount</option>
                                         <option value="percentage">Percentage</option>
+                                        <option value="senior">Senior Citizen (20%)</option>
+                                        <option value="pwd">PWD (20%)</option>
                                     </select>
                                     <x-input-error :messages="$errors->get('discountType')" class="mt-2" />
                                 </div>
+                                @if (! in_array($discountType, ['senior', 'pwd'], true))
                                 <div>
                                     <label for="discount-value" class="sniper-label">Value</label>
                                     <input id="discount-value" wire:model="discountValue" type="number" step="0.01" min="0" class="sniper-input text-right" placeholder="0.00" />
                                     <x-input-error :messages="$errors->get('discountValue')" class="mt-2" />
                                 </div>
+                                @else
+                                <div class="flex items-end"><div class="w-full rounded-lg bg-slate-50 px-3 py-3 text-sm font-semibold text-sniper-navy ring-1 ring-slate-200">Statutory rate: 20%</div></div>
+                                @endif
                                 <div class="flex items-end">
                                     <button type="button" wire:click="applyDiscount" class="sniper-btn-secondary h-[42px] w-full px-4 sm:w-auto">Apply</button>
                                 </div>
@@ -191,13 +197,31 @@
                             <div class="mt-3 flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800 ring-1 ring-emerald-200">
                                 <span class="font-semibold">Discount applied</span>
                                 <span>
-                                    @if ($appliedDiscountType === 'percentage')
+                                    @if (in_array($appliedDiscountType, ['senior', 'pwd'], true))
+                                        {{ $appliedDiscountType === 'senior' ? 'Senior Citizen' : 'PWD' }} · 20%
+                                    @elseif ($appliedDiscountType === 'percentage')
                                         {{ number_format($appliedDiscountValue, 2) }}%
                                     @else
                                         ₱{{ number_format($appliedDiscountValue, 2) }}
                                     @endif
                                 </span>
                             </div>
+                        @endif
+                        @if ($vatExemptionAmount > 0)
+                            <div class="flex justify-between text-sky-700"><span>VAT exemption</span><span class="font-semibold">− ₱{{ number_format($vatExemptionAmount, 2) }}</span></div>
+                        @endif
+                    </div>
+
+                    <div class="mt-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div class="text-xs font-bold uppercase tracking-[0.12em] text-sniper-navy">Buyer information</div>
+                        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                            <div><label for="buyer-name" class="sniper-label">Registered name</label><input id="buyer-name" wire:model="buyerName" class="sniper-input" maxlength="200" placeholder="Optional" /><x-input-error :messages="$errors->get('buyerName')" class="mt-2" /></div>
+                            <div><label for="buyer-tin" class="sniper-label">TIN</label><input id="buyer-tin" wire:model="buyerTin" class="sniper-input" maxlength="30" placeholder="Optional" /><x-input-error :messages="$errors->get('buyerTin')" class="mt-2" /></div>
+                            <div><label for="buyer-style" class="sniper-label">Business style</label><input id="buyer-style" wire:model="buyerBusinessStyle" class="sniper-input" maxlength="200" placeholder="Optional" /><x-input-error :messages="$errors->get('buyerBusinessStyle')" class="mt-2" /></div>
+                            <div><label for="buyer-address" class="sniper-label">Address</label><input id="buyer-address" wire:model="buyerAddress" class="sniper-input" maxlength="500" placeholder="Optional" /><x-input-error :messages="$errors->get('buyerAddress')" class="mt-2" /></div>
+                        </div>
+                        @if (in_array($appliedDiscountType, ['senior', 'pwd'], true))
+                            <div class="mt-4 border-t border-slate-200 pt-4"><div class="grid gap-3 sm:grid-cols-2"><div><label for="beneficiary-name" class="sniper-label">Beneficiary name</label><input id="beneficiary-name" wire:model="discountBeneficiaryName" class="sniper-input" maxlength="200" /><x-input-error :messages="$errors->get('discountBeneficiaryName')" class="mt-2" /></div><div><label for="discount-id" class="sniper-label">Senior/PWD ID number</label><input id="discount-id" wire:model="discountIdNumber" class="sniper-input" maxlength="100" /><x-input-error :messages="$errors->get('discountIdNumber')" class="mt-2" /></div></div></div>
                         @endif
                     </div>
 

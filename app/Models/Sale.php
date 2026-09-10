@@ -30,6 +30,13 @@ use LogicException;
     'zero_rated_sales',
     'non_vat_sales',
     'seller_snapshot',
+    'buyer_name',
+    'buyer_tin',
+    'buyer_address',
+    'buyer_business_style',
+    'discount_beneficiary_name',
+    'discount_id_number',
+    'vat_exemption_amount',
 ])]
 class Sale extends Model
 {
@@ -38,6 +45,10 @@ class Sale extends Model
     public const STATUS_COMPLETED = 'completed';
     public const DISCOUNT_FIXED = 'fixed';
     public const DISCOUNT_PERCENTAGE = 'percentage';
+
+    public const DISCOUNT_SENIOR = 'senior';
+
+    public const DISCOUNT_PWD = 'pwd';
 
     public function user(): BelongsTo
     {
@@ -87,6 +98,13 @@ class Sale extends Model
                 'zero_rated_sales',
                 'non_vat_sales',
                 'seller_snapshot',
+                'buyer_name',
+                'buyer_tin',
+                'buyer_address',
+                'buyer_business_style',
+                'discount_beneficiary_name',
+                'discount_id_number',
+                'vat_exemption_amount',
             ];
 
             if ($sale->isDirty($protected)) {
@@ -111,6 +129,7 @@ class Sale extends Model
             'zero_rated_sales' => 'decimal:2',
             'non_vat_sales' => 'decimal:2',
             'seller_snapshot' => 'array',
+            'vat_exemption_amount' => 'decimal:2',
         ];
     }
 }

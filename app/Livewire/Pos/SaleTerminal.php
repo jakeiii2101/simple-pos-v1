@@ -9,6 +9,7 @@ use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Support\Audit;
 use App\Support\InvoiceNumberService;
+use App\Support\SaleTaxCalculator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -36,6 +37,13 @@ class SaleTerminal extends Component
     public ?string $appliedDiscountType = null;
 
     public float $appliedDiscountValue = 0.0;
+
+    public string $buyerName = '';
+    public string $buyerTin = '';
+    public string $buyerAddress = '';
+    public string $buyerBusinessStyle = '';
+    public string $discountBeneficiaryName = '';
+    public string $discountIdNumber = '';
 
     public ?int $lastSaleId = null;
 
@@ -99,6 +107,8 @@ class SaleTerminal extends Component
             'price' => (float) $product->selling_price,
             'quantity' => 1,
             'stock' => $product->stock_quantity,
+            'tax_type' => $product->tax_type,
+            'is_senior_pwd_discount_eligible' => $product->is_senior_pwd_discount_eligible,
         ];
 
         $this->resetErrorBag('cart');
@@ -148,6 +158,7 @@ class SaleTerminal extends Component
         $this->cart = [];
         $this->resetDiscountState();
         $this->resetPaymentState();
+        $this->resetBuyerState();
         $this->resetValidation();
     }
 
@@ -162,12 +173,20 @@ class SaleTerminal extends Component
             'discountType' => ['required', Rule::in([
                 Sale::DISCOUNT_FIXED,
                 Sale::DISCOUNT_PERCENTAGE,
+                Sale::DISCOUNT_SENIOR,
+                Sale::DISCOUNT_PWD,
             ])],
-            'discountValue' => ['required', 'numeric', 'gt:0'],
+            'discountValue' => [Rule::requiredIf(! $this->isRegulatedDiscount($this->discountType)), 'nullable', 'numeric', 'gt:0'],
         ]);
 
-        $value = round((float) $validated['discountValue'], 2);
+        $regulated = $this->isRegulatedDiscount($validated['discountType']);
+        $value = $regulated ? 20.0 : round((float) $validated['discountValue'], 2);
         $subtotal = $this->cartSubtotal();
+
+        if ($regulated && ! collect($this->cart)->contains('is_senior_pwd_discount_eligible', true)) {
+            $this->addError('discountType', 'The cart has no product eligible for a Senior/PWD discount.');
+            return;
+        }
 
         if ($validated['discountType'] === Sale::DISCOUNT_PERCENTAGE && $value > 100) {
             $this->addError('discountValue', 'Percentage discount cannot exceed 100%.');
@@ -192,7 +211,7 @@ class SaleTerminal extends Component
         $this->resetErrorBag('discountValue');
     }
 
-    public function completeSale(InvoiceNumberService $invoiceNumberService): void
+    public function completeSale(InvoiceNumberService $invoiceNumberService, SaleTaxCalculator $calculator): void
     {
         if ($this->cart === []) {
             $this->addError('cart', 'Add at least one product before completing the sale.');
@@ -206,7 +225,16 @@ class SaleTerminal extends Component
                 Payment::METHOD_CARD,
                 Payment::METHOD_OTHER,
             ])],
+            'buyerName' => ['nullable', 'string', 'max:200', 'required_with:buyerTin,buyerAddress,buyerBusinessStyle'],
+            'buyerTin' => ['nullable', 'string', 'max:30', 'regex:/^[0-9-]+$/'],
+            'buyerAddress' => ['nullable', 'string', 'max:500'],
+            'buyerBusinessStyle' => ['nullable', 'string', 'max:200'],
         ];
+
+        if ($this->isRegulatedDiscount($this->appliedDiscountType)) {
+            $rules['discountBeneficiaryName'] = ['required', 'string', 'max:200'];
+            $rules['discountIdNumber'] = ['required', 'string', 'max:100'];
+        }
 
         if ($this->paymentMethod === Payment::METHOD_CASH) {
             $rules['cashReceived'] = ['required', 'numeric', 'min:0'];
@@ -222,7 +250,7 @@ class SaleTerminal extends Component
         $discountValue = $this->appliedDiscountValue;
         $paymentMethod = $validated['paymentMethod'];
 
-        $sale = DB::transaction(function () use ($validated, $discountType, $discountValue, $paymentMethod, $invoiceNumberService): Sale {
+        $sale = DB::transaction(function () use ($validated, $discountType, $discountValue, $paymentMethod, $invoiceNumberService, $calculator): Sale {
             $lines = [];
             $subtotal = 0.0;
 
@@ -255,27 +283,23 @@ class SaleTerminal extends Component
                     'after' => $after,
                     'unit_price' => $unitPrice,
                     'line_total' => $lineTotal,
+                    'tax_type' => $product->tax_type,
+                    'is_senior_pwd_discount_eligible' => $product->is_senior_pwd_discount_eligible,
                 ];
             }
 
-            $discountAmount = $this->discountAmountForSubtotal(
-                $subtotal,
-                $discountType,
-                $discountValue,
-            );
-            $total = round(max(0, $subtotal - $discountAmount), 2);
+            if ($this->isRegulatedDiscount($discountType) && ! collect($lines)->contains('is_senior_pwd_discount_eligible', true)) {
+                throw ValidationException::withMessages([
+                    'cart' => 'The cart no longer contains a product eligible for this statutory discount.',
+                ]);
+            }
+
             $invoice = $invoiceNumberService->next();
             $birSetting = $invoice['setting'];
-
-            if ($birSetting->tax_type === BirSetting::TAX_TYPE_VAT) {
-                $vatableSales = round($total / (1 + ((float) $birSetting->vat_rate / 100)), 2);
-                $vatAmount = round($total - $vatableSales, 2);
-                $nonVatSales = 0.0;
-            } else {
-                $vatableSales = 0.0;
-                $vatAmount = 0.0;
-                $nonVatSales = $total;
-            }
+            $calculation = $calculator->calculate($lines, $birSetting, $discountType, $discountValue);
+            $lines = $calculation['lines'];
+            $discountAmount = $calculation['discount_amount'];
+            $total = $calculation['total'];
 
             if ($paymentMethod === Payment::METHOD_CASH) {
                 $amountTendered = round((float) $validated['cashReceived'], 2);
@@ -319,12 +343,19 @@ class SaleTerminal extends Component
                 'status' => Sale::STATUS_COMPLETED,
                 'completed_at' => now(),
                 'tax_type' => $birSetting->tax_type,
-                'vatable_sales' => $vatableSales,
-                'vat_amount' => $vatAmount,
-                'vat_exempt_sales' => 0,
-                'zero_rated_sales' => 0,
-                'non_vat_sales' => $nonVatSales,
                 'seller_snapshot' => $birSetting->invoiceSnapshot(),
+                'buyer_name' => $this->nullableTrim($validated['buyerName'] ?? null),
+                'buyer_tin' => $this->nullableTrim($validated['buyerTin'] ?? null),
+                'buyer_address' => $this->nullableTrim($validated['buyerAddress'] ?? null),
+                'buyer_business_style' => $this->nullableTrim($validated['buyerBusinessStyle'] ?? null),
+                'discount_beneficiary_name' => $this->isRegulatedDiscount($discountType) ? trim($validated['discountBeneficiaryName']) : null,
+                'discount_id_number' => $this->isRegulatedDiscount($discountType) ? trim($validated['discountIdNumber']) : null,
+                'vat_exemption_amount' => $calculation['vat_exemption_amount'],
+                'vatable_sales' => $calculation['vatable_sales'],
+                'vat_amount' => $calculation['vat_amount'],
+                'vat_exempt_sales' => $calculation['vat_exempt_sales'],
+                'zero_rated_sales' => $calculation['zero_rated_sales'],
+                'non_vat_sales' => $calculation['non_vat_sales'],
             ]);
 
             $sale->payment()->create([
@@ -346,6 +377,11 @@ class SaleTerminal extends Component
                     'unit_price' => $line['unit_price'],
                     'quantity' => $line['quantity'],
                     'line_total' => $line['line_total'],
+                    'tax_type' => $line['tax_type'],
+                    'is_senior_pwd_discount_eligible' => $line['is_senior_pwd_discount_eligible'],
+                    'discount_amount' => $line['discount_amount'],
+                    'vat_amount' => $line['vat_amount'],
+                    'net_total' => $line['net_total'],
                 ]);
 
                 $product->update(['stock_quantity' => $line['after']]);
@@ -385,6 +421,7 @@ class SaleTerminal extends Component
         $this->search = '';
         $this->resetDiscountState();
         $this->resetPaymentState();
+        $this->resetBuyerState();
         $this->resetValidation();
         session()->flash('success', 'Sale completed successfully.');
     }
@@ -396,54 +433,20 @@ class SaleTerminal extends Component
         ), 2);
     }
 
-    private function discountAmountForSubtotal(float $subtotal, ?string $type, float $value): float
+    private function previewTotals(): array
     {
-        if ($type === null) {
-            return 0.0;
+        $setting = BirSetting::query()->where('is_active', true)->first();
+        if ($setting === null || $this->cart === []) {
+            return ['discount_amount' => 0.0, 'vat_exemption_amount' => 0.0, 'total' => $this->cartSubtotal()];
         }
 
-        if ($value <= 0) {
-            throw ValidationException::withMessages([
-                'discountValue' => 'Discount value must be greater than zero.',
-            ]);
-        }
+        $lines = collect($this->cart)->values()->map(fn (array $item): array => [
+            'line_total' => round($item['price'] * $item['quantity'], 2),
+            'tax_type' => $item['tax_type'],
+            'is_senior_pwd_discount_eligible' => $item['is_senior_pwd_discount_eligible'],
+        ])->all();
 
-        if ($type === Sale::DISCOUNT_FIXED) {
-            if ($value > $subtotal) {
-                throw ValidationException::withMessages([
-                    'discountValue' => 'Fixed discount cannot exceed the sale subtotal.',
-                ]);
-            }
-
-            return round($value, 2);
-        }
-
-        if ($type === Sale::DISCOUNT_PERCENTAGE) {
-            if ($value > 100) {
-                throw ValidationException::withMessages([
-                    'discountValue' => 'Percentage discount cannot exceed 100%.',
-                ]);
-            }
-
-            return round($subtotal * ($value / 100), 2);
-        }
-
-        throw ValidationException::withMessages([
-            'discountType' => 'Invalid discount type.',
-        ]);
-    }
-
-    private function previewDiscountAmount(float $subtotal): float
-    {
-        if ($this->appliedDiscountType === Sale::DISCOUNT_FIXED) {
-            return round(min($this->appliedDiscountValue, $subtotal), 2);
-        }
-
-        if ($this->appliedDiscountType === Sale::DISCOUNT_PERCENTAGE) {
-            return round($subtotal * (min($this->appliedDiscountValue, 100) / 100), 2);
-        }
-
-        return 0.0;
+        return app(SaleTaxCalculator::class)->calculate($lines, $setting, $this->appliedDiscountType, $this->appliedDiscountValue);
     }
 
     private function resetDiscountState(): void
@@ -459,6 +462,28 @@ class SaleTerminal extends Component
         $this->paymentMethod = Payment::METHOD_CASH;
         $this->paymentReference = '';
         $this->cashReceived = '';
+    }
+
+    private function resetBuyerState(): void
+    {
+        $this->buyerName = '';
+        $this->buyerTin = '';
+        $this->buyerAddress = '';
+        $this->buyerBusinessStyle = '';
+        $this->discountBeneficiaryName = '';
+        $this->discountIdNumber = '';
+    }
+
+    private function isRegulatedDiscount(?string $type): bool
+    {
+        return in_array($type, [Sale::DISCOUNT_SENIOR, Sale::DISCOUNT_PWD], true);
+    }
+
+    private function nullableTrim(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 
     public function render()
@@ -480,8 +505,10 @@ class SaleTerminal extends Component
             ->get();
 
         $subtotal = $this->cartSubtotal();
-        $discountAmount = $this->previewDiscountAmount($subtotal);
-        $total = round(max(0, $subtotal - $discountAmount), 2);
+        $preview = $this->previewTotals();
+        $discountAmount = $preview['discount_amount'];
+        $vatExemptionAmount = $preview['vat_exemption_amount'];
+        $total = $preview['total'];
         $cash = is_numeric($this->cashReceived) ? (float) $this->cashReceived : 0.0;
         $changeDue = $this->paymentMethod === Payment::METHOD_CASH
             ? max(0, round($cash - $total, 2))
@@ -491,6 +518,7 @@ class SaleTerminal extends Component
             'products' => $products,
             'subtotal' => $subtotal,
             'discountAmount' => $discountAmount,
+            'vatExemptionAmount' => $vatExemptionAmount,
             'total' => $total,
             'changeDue' => $changeDue,
         ]);

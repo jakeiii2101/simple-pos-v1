@@ -85,6 +85,24 @@
             <div class="row"><span>Cashier</span><span>{{ $sale->user->name }}</span></div>
         </div>
 
+        @if ($sale->buyer_name)
+            <div class="section">
+                <div class="payment-label">Buyer</div>
+                <div>{{ $sale->buyer_name }}</div>
+                @if ($sale->buyer_tin)<div class="muted">TIN: {{ $sale->buyer_tin }}</div>@endif
+                @if ($sale->buyer_business_style)<div class="muted">Business Style: {{ $sale->buyer_business_style }}</div>@endif
+                @if ($sale->buyer_address)<div class="muted">{{ $sale->buyer_address }}</div>@endif
+            </div>
+        @endif
+
+        @if (in_array($sale->discount_type, ['senior', 'pwd'], true))
+            <div class="section">
+                <div class="payment-label">{{ $sale->discount_type === 'senior' ? 'Senior Citizen' : 'PWD' }} Discount</div>
+                <div>{{ $sale->discount_beneficiary_name }}</div>
+                <div class="muted">ID No.: {{ $sale->discount_id_number }}</div>
+            </div>
+        @endif
+
         <div class="section">
             @foreach ($sale->items as $item)
                 <div class="item">
@@ -102,13 +120,16 @@
             @if ((float) $sale->discount_amount > 0)
                 <div class="row discount">
                     <span>
-                        Discount
+                        {{ $sale->discount_type === 'senior' ? 'Senior Citizen Discount' : ($sale->discount_type === 'pwd' ? 'PWD Discount' : 'Discount') }}
                         @if ($sale->discount_type === 'percentage')
                             ({{ number_format((float) $sale->discount_value, 2) }}%)
                         @endif
                     </span>
                     <span>− ₱{{ number_format((float) $sale->discount_amount, 2) }}</span>
                 </div>
+            @endif
+            @if ((float) $sale->vat_exemption_amount > 0)
+                <div class="row discount"><span>Less: VAT Exemption</span><span>− ₱{{ number_format((float) $sale->vat_exemption_amount, 2) }}</span></div>
             @endif
             <div class="row total"><span>Total</span><span>₱{{ number_format((float) $sale->total, 2) }}</span></div>
         </div>
