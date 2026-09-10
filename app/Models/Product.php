@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'stock_quantity',
     'low_stock_level',
     'status',
+    'tax_type',
+    'is_senior_pwd_discount_eligible',
 ])]
 class Product extends Model
 {
@@ -26,6 +28,12 @@ class Product extends Model
     public const STATUS_ACTIVE = 'active';
 
     public const STATUS_INACTIVE = 'inactive';
+
+    public const TAX_VATABLE = 'vatable';
+
+    public const TAX_VAT_EXEMPT = 'vat_exempt';
+
+    public const TAX_ZERO_RATED = 'zero_rated';
 
     public function category(): BelongsTo
     {
@@ -54,6 +62,7 @@ class Product extends Model
             'selling_price' => 'decimal:2',
             'stock_quantity' => 'integer',
             'low_stock_level' => 'integer',
+            'is_senior_pwd_discount_eligible' => 'boolean',
         ];
     }
 }

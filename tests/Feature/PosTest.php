@@ -291,6 +291,77 @@ class PosTest extends TestCase
         $this->assertDatabaseCount('payments', 0);
     }
 
+    public function test_mixed_tax_classes_are_snapshotted_and_calculated_per_item(): void
+    {
+        $cashier = User::factory()->create();
+        $this->configureBirInvoicing();
+        $vatable = $this->createProduct('TAX-001', 'VATable Item', 112, 5);
+        $exempt = $this->createProduct('TAX-002', 'VAT Exempt Item', 50, 5);
+        $exempt->update(['tax_type' => Product::TAX_VAT_EXEMPT]);
+
+        Livewire::actingAs($cashier)->test(SaleTerminal::class)
+            ->call('addProduct', $vatable->id)
+            ->call('addProduct', $exempt->id)
+            ->set('cashReceived', '200')
+            ->call('completeSale')
+            ->assertHasNoErrors();
+
+        $sale = Sale::query()->firstOrFail();
+        $this->assertSame('100.00', $sale->vatable_sales);
+        $this->assertSame('12.00', $sale->vat_amount);
+        $this->assertSame('50.00', $sale->vat_exempt_sales);
+        $this->assertSame('162.00', $sale->total);
+        $this->assertDatabaseHas('sale_items', ['product_id' => $exempt->id, 'tax_type' => Product::TAX_VAT_EXEMPT, 'net_total' => 50]);
+    }
+
+    public function test_senior_discount_removes_vat_and_discounts_only_eligible_items(): void
+    {
+        $cashier = User::factory()->create();
+        $this->configureBirInvoicing();
+        $eligible = $this->createProduct('SC-001', 'Eligible Medicine', 112, 5);
+        $eligible->update(['is_senior_pwd_discount_eligible' => true]);
+        $regular = $this->createProduct('SC-002', 'Regular Item', 112, 5);
+
+        Livewire::actingAs($cashier)->test(SaleTerminal::class)
+            ->call('addProduct', $eligible->id)
+            ->call('addProduct', $regular->id)
+            ->set('discountType', Sale::DISCOUNT_SENIOR)
+            ->call('applyDiscount')
+            ->set('discountBeneficiaryName', 'Juan Dela Cruz')
+            ->set('discountIdNumber', 'SC-123456')
+            ->set('buyerName', 'Juan Dela Cruz')
+            ->set('cashReceived', '200')
+            ->call('completeSale')
+            ->assertHasNoErrors();
+
+        $sale = Sale::query()->firstOrFail();
+        $this->assertSame('20.00', $sale->discount_amount);
+        $this->assertSame('12.00', $sale->vat_exemption_amount);
+        $this->assertSame('192.00', $sale->total);
+        $this->assertSame('80.00', $sale->vat_exempt_sales);
+        $this->assertSame('100.00', $sale->vatable_sales);
+        $this->assertSame('12.00', $sale->vat_amount);
+        $this->assertSame('Juan Dela Cruz', $sale->discount_beneficiary_name);
+        $this->assertDatabaseHas('sale_items', ['product_id' => $eligible->id, 'discount_amount' => 20, 'net_total' => 80]);
+    }
+
+    public function test_regulated_discount_requires_beneficiary_and_id(): void
+    {
+        $cashier = User::factory()->create();
+        $product = $this->createProduct('PWD-001', 'Eligible Item', 112, 5);
+        $product->update(['is_senior_pwd_discount_eligible' => true]);
+
+        Livewire::actingAs($cashier)->test(SaleTerminal::class)
+            ->call('addProduct', $product->id)
+            ->set('discountType', Sale::DISCOUNT_PWD)
+            ->call('applyDiscount')
+            ->set('cashReceived', '100')
+            ->call('completeSale')
+            ->assertHasErrors(['discountBeneficiaryName', 'discountIdNumber']);
+
+        $this->assertDatabaseCount('sales', 0);
+    }
+
     public function test_sale_cannot_complete_when_stock_changed_below_cart_quantity(): void
     {
         $cashier = User::factory()->create();

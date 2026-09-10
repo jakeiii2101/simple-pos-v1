@@ -75,12 +75,28 @@
                                 <span class="font-semibold">− ₱{{ number_format((float) $sale->discount_amount, 2) }}</span>
                             </div>
                         @endif
+                        @if ((float) $sale->vat_exemption_amount > 0)
+                            <div class="flex justify-between gap-4 text-sky-700"><span>VAT exemption</span><span class="font-semibold">− ₱{{ number_format((float) $sale->vat_exemption_amount, 2) }}</span></div>
+                        @endif
                         <div class="flex items-end justify-between gap-4 border-t border-slate-200 pt-3">
                             <span class="font-heading font-bold text-sniper-navy">Total</span>
                             <span class="font-heading text-2xl font-extrabold text-sniper-navy">₱{{ number_format((float) $sale->total, 2) }}</span>
                         </div>
                     </div>
                 </div>
+
+                @if ($sale->buyer_name || in_array($sale->discount_type, ['senior', 'pwd'], true))
+                    <div class="sniper-card p-5">
+                        <div class="sniper-kicker">Buyer and discount record</div>
+                        <div class="mt-4 space-y-2 text-sm text-sniper-navy">
+                            @if($sale->buyer_name)<div><span class="text-sniper-slate">Buyer:</span> {{ $sale->buyer_name }}</div>@endif
+                            @if($sale->buyer_tin)<div><span class="text-sniper-slate">TIN:</span> {{ $sale->buyer_tin }}</div>@endif
+                            @if($sale->buyer_address)<div><span class="text-sniper-slate">Address:</span> {{ $sale->buyer_address }}</div>@endif
+                            @if($sale->buyer_business_style)<div><span class="text-sniper-slate">Business style:</span> {{ $sale->buyer_business_style }}</div>@endif
+                            @if(in_array($sale->discount_type, ['senior', 'pwd'], true))<div class="border-t border-slate-200 pt-2"><span class="font-semibold">{{ $sale->discount_type === 'senior' ? 'Senior Citizen' : 'PWD' }}:</span> {{ $sale->discount_beneficiary_name }} · ID {{ $sale->discount_id_number }}</div>@endif
+                        </div>
+                    </div>
+                @endif
 
                 <div class="sniper-card p-5">
                     <div class="sniper-kicker">Payment</div>

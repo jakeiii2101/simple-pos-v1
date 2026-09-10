@@ -15,6 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'unit_price',
     'quantity',
     'line_total',
+    'tax_type',
+    'is_senior_pwd_discount_eligible',
+    'discount_amount',
+    'vat_amount',
+    'net_total',
 ])]
 class SaleItem extends Model
 {
@@ -36,6 +41,10 @@ class SaleItem extends Model
             'unit_price' => 'decimal:2',
             'line_total' => 'decimal:2',
             'quantity' => 'integer',
+            'is_senior_pwd_discount_eligible' => 'boolean',
+            'discount_amount' => 'decimal:2',
+            'vat_amount' => 'decimal:2',
+            'net_total' => 'decimal:2',
         ];
     }
 }

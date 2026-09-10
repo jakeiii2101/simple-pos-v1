@@ -32,6 +32,10 @@ class ProductList extends Component
 
     public string $status = Product::STATUS_ACTIVE;
 
+    public string $taxType = Product::TAX_VATABLE;
+
+    public bool $isSeniorPwdDiscountEligible = false;
+
     public bool $showForm = false;
 
     public function mount(): void
@@ -67,6 +71,8 @@ class ProductList extends Component
         $this->stockQuantity = $product->stock_quantity;
         $this->lowStockLevel = $product->low_stock_level;
         $this->status = $product->status;
+        $this->taxType = $product->tax_type;
+        $this->isSeniorPwdDiscountEligible = $product->is_senior_pwd_discount_eligible;
         $this->showForm = true;
         $this->resetValidation();
     }
@@ -82,6 +88,12 @@ class ProductList extends Component
             'sellingPrice' => ['required', 'numeric', 'min:0'],
             'lowStockLevel' => ['required', 'integer', 'min:0'],
             'status' => ['required', Rule::in([Product::STATUS_ACTIVE, Product::STATUS_INACTIVE])],
+            'taxType' => ['required', Rule::in([
+                Product::TAX_VATABLE,
+                Product::TAX_VAT_EXEMPT,
+                Product::TAX_ZERO_RATED,
+            ])],
+            'isSeniorPwdDiscountEligible' => ['boolean'],
         ];
 
         if ($this->editingId === null) {
@@ -89,6 +101,12 @@ class ProductList extends Component
         }
 
         $validated = $this->validate($rules);
+
+        if ($validated['isSeniorPwdDiscountEligible'] && $validated['taxType'] !== Product::TAX_VATABLE) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'isSeniorPwdDiscountEligible' => 'Senior/PWD eligibility may only be enabled for VATable products.',
+            ]);
+        }
 
         $data = [
             'category_id' => $validated['categoryId'],
@@ -99,6 +117,8 @@ class ProductList extends Component
             'selling_price' => $validated['sellingPrice'],
             'low_stock_level' => $validated['lowStockLevel'],
             'status' => $validated['status'],
+            'tax_type' => $validated['taxType'],
+            'is_senior_pwd_discount_eligible' => $validated['isSeniorPwdDiscountEligible'],
         ];
 
         if ($this->editingId !== null) {
@@ -112,6 +132,8 @@ class ProductList extends Component
                 'selling_price',
                 'low_stock_level',
                 'status',
+                'tax_type',
+                'is_senior_pwd_discount_eligible',
             ]);
             $oldSellingPrice = (string) $product->selling_price;
 
@@ -209,6 +231,8 @@ class ProductList extends Component
         $this->stockQuantity = 0;
         $this->lowStockLevel = 5;
         $this->status = Product::STATUS_ACTIVE;
+        $this->taxType = Product::TAX_VATABLE;
+        $this->isSeniorPwdDiscountEligible = false;
         $this->showForm = false;
         $this->resetValidation();
     }
