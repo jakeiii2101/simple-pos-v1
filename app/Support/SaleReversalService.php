@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\DailyClosing;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleAdjustment;
@@ -20,6 +21,10 @@ class SaleReversalService
 
         if ($sale->status !== Sale::STATUS_COMPLETED) {
             throw ValidationException::withMessages(['reversal' => 'Only a completed sale may be voided or refunded.']);
+        }
+
+        if (DailyClosing::query()->whereDate('business_date', now())->exists()) {
+            throw ValidationException::withMessages(['reversal' => 'Today already has a Z-reading. Process reversals on the next open business date.']);
         }
 
         if (! in_array($type, [SaleAdjustment::TYPE_VOID, SaleAdjustment::TYPE_REFUND], true)) {

@@ -3,6 +3,7 @@
 namespace App\Livewire\Pos;
 
 use App\Models\BirSetting;
+use App\Models\DailyClosing;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
@@ -251,6 +252,12 @@ class SaleTerminal extends Component
         $paymentMethod = $validated['paymentMethod'];
 
         $sale = DB::transaction(function () use ($validated, $discountType, $discountValue, $paymentMethod, $invoiceNumberService, $calculator): Sale {
+            if (DailyClosing::query()->whereDate('business_date', now())->lockForUpdate()->exists()) {
+                throw ValidationException::withMessages([
+                    'cart' => 'Today already has a Z-reading. New sales are locked for this business date.',
+                ]);
+            }
+
             $lines = [];
             $subtotal = 0.0;
 
