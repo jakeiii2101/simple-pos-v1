@@ -5,7 +5,7 @@
             <h1 class="sniper-title mt-1">Audit Log</h1>
             <p class="sniper-subtitle">Review critical sales, inventory, and user-access changes recorded by SniperPOS.</p>
         </div>
-        <span class="sniper-badge-navy">Read only</span>
+        <div class="flex gap-2"><a href="{{ route('compliance.audit', ['from' => now()->startOfMonth()->toDateString(), 'to' => now()->endOfMonth()->toDateString()], false) }}" class="sniper-btn-secondary">Export This Month</a><span class="sniper-badge-navy">Read only</span></div>
     </div>
 
     <div class="sniper-card p-5 sm:p-6">
