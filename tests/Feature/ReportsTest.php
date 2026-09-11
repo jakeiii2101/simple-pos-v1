@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleAdjustment;
+use App\Models\SaleRefund;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -161,6 +162,59 @@ class ReportsTest extends TestCase
 
         $this->actingAs($cashier)->get(route('reports.export.sales', $range))->assertForbidden();
         $this->actingAs($cashier)->get(route('reports.export.reversals', $range))->assertForbidden();
+    }
+
+    public function test_partial_refunds_reduce_bir_totals_and_appear_in_the_register_and_exports(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $sale = $this->createBirSale($admin, 'SI-PARTIAL-REPORT', 336);
+        $item = $sale->items()->create([
+            'product_name' => 'Report Refund Item',
+            'sku' => 'RRI-001',
+            'unit_price' => 112,
+            'quantity' => 3,
+            'line_total' => 336,
+            'tax_type' => Product::TAX_VATABLE,
+            'vat_amount' => 36,
+            'net_total' => 336,
+        ]);
+        $refund = SaleRefund::query()->create([
+            'refund_number' => 'RF-00000000000000000000000001',
+            'sale_id' => $sale->id,
+            'authorized_by' => $admin->id,
+            'gross_amount' => 112,
+            'vatable_sales' => 100,
+            'vat_amount' => 12,
+            'refund_amount' => 112,
+            'reason' => 'Customer returned one report item',
+            'inventory_restocked' => true,
+            'processed_at' => now(),
+        ]);
+        $refund->items()->create([
+            'sale_item_id' => $item->id,
+            'quantity' => 1,
+            'gross_amount' => 112,
+            'vat_amount' => 12,
+            'refund_amount' => 112,
+        ]);
+
+        Livewire::actingAs($admin)->test(ReportsDashboard::class)
+            ->set('reportMonth', now()->format('Y-m'))
+            ->assertViewHas('monthlyNetSales', 224.0)
+            ->assertViewHas('vatableSales', 200.0)
+            ->assertViewHas('vatAmount', 24.0)
+            ->assertViewHas('partialRefundCount', 1)
+            ->assertSee('SI-PARTIAL-REPORT')
+            ->assertSee('PARTIAL REFUND');
+
+        $range = ['from' => now()->startOfMonth()->toDateString(), 'to' => now()->endOfMonth()->toDateString()];
+        $salesCsv = $this->actingAs($admin)->get(route('reports.export.sales', $range))->streamedContent();
+        $this->assertStringContainsString('Partial Refund Total', $salesCsv);
+        $this->assertStringContainsString('PARTIAL REFUND', $salesCsv);
+
+        $reversalCsv = $this->get(route('reports.export.reversals', $range))->streamedContent();
+        $this->assertStringContainsString($refund->refund_number, $reversalCsv);
+        $this->assertStringContainsString('Report Refund Item x1', $reversalCsv);
     }
 
     private function createBirSale(User $user, string $invoice, float $total, ?string $buyerName = null): Sale

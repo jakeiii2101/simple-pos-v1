@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleAdjustment;
+use App\Models\SaleRefund;
 use App\Models\User;
 use App\Support\DailyReadingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -126,6 +127,35 @@ class DailyReadingsTest extends TestCase
 
         $this->assertDatabaseCount('sales', 0);
         $this->assertSame(5, $product->fresh()->stock_quantity);
+    }
+
+    public function test_x_and_z_readings_reconcile_partial_refunds(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $sale = $this->createSale($admin, 'SI-PARTIAL-Z', 336);
+        SaleRefund::query()->create([
+            'refund_number' => 'RF-00000000000000000000000002',
+            'sale_id' => $sale->id,
+            'authorized_by' => $admin->id,
+            'gross_amount' => 112,
+            'vatable_sales' => 100,
+            'vat_amount' => 12,
+            'refund_amount' => 112,
+            'reason' => 'Partial return included in reading',
+            'inventory_restocked' => false,
+            'processed_at' => now(),
+        ]);
+
+        $snapshot = app(DailyReadingService::class)->snapshot(now());
+
+        $this->assertSame(224.0, $snapshot['sales']['net_sales']);
+        $this->assertSame(200.0, $snapshot['tax']['vatable_sales']);
+        $this->assertSame(24.0, $snapshot['tax']['vat_amount']);
+        $this->assertSame(1, $snapshot['reversals']['partial_refund_count']);
+        $this->assertSame(112.0, $snapshot['reversals']['partial_refund_amount']);
+
+        $closing = app(DailyReadingService::class)->close(now(), $admin, 'Partial refund reconciled');
+        $this->assertSame(224.0, $closing->snapshot['sales']['net_sales']);
     }
 
     private function createSale(User $user, string $invoice, float $total): Sale

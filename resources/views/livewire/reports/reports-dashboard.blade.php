@@ -47,7 +47,7 @@
     <section class="sniper-card mt-6 overflow-hidden">
         <div class="sniper-section-header">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div><div class="sniper-kicker">BIR Sales Summary</div><h2 class="mt-1 font-heading text-lg font-bold text-sniper-navy">Tax Breakdown — {{ $reportMonthLabel }}</h2><p class="mt-1 text-xs text-sniper-slate">Active completed invoices only. Voided and refunded transactions are retained in the register below.</p></div>
+                <div><div class="sniper-kicker">BIR Sales Summary</div><h2 class="mt-1 font-heading text-lg font-bold text-sniper-navy">Tax Breakdown — {{ $reportMonthLabel }}</h2><p class="mt-1 text-xs text-sniper-slate">Completed invoices less full and partial refund activity processed in the selected period.</p></div>
                 <div class="flex flex-wrap gap-2"><a href="{{ route('reports.export.sales', ['from' => $exportFrom, 'to' => $exportTo], false) }}" class="sniper-btn-secondary">Download BIR Sales CSV</a><a href="{{ route('reports.export.reversals', ['from' => $exportFrom, 'to' => $exportTo], false) }}" class="sniper-btn-secondary">Download Reversal CSV</a></div>
             </div>
         </div>
@@ -68,7 +68,7 @@
     <section class="sniper-section mt-6">
         <div class="sniper-section-header">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div><h2 class="font-heading text-lg font-bold text-sniper-navy">Void and Refund Register</h2><p class="mt-1 text-sm text-sniper-slate">{{ number_format($reversalCount) }} reversal(s) totaling ₱{{ number_format($reversalAmount, 2) }} for the selected month.</p></div>
+                <div><h2 class="font-heading text-lg font-bold text-sniper-navy">Void and Refund Register</h2><p class="mt-1 text-sm text-sniper-slate">{{ number_format($reversalCount) }} reversal(s) totaling ₱{{ number_format($reversalAmount, 2) }} for the selected month, including {{ number_format($partialRefundCount) }} partial refund(s).</p></div>
                 <div class="flex gap-2"><span class="sniper-badge-danger">Voids ₱{{ number_format($voidAmount, 2) }}</span><span class="sniper-badge-warning">Refunds ₱{{ number_format($refundAmount, 2) }}</span></div>
             </div>
         </div>
@@ -76,8 +76,13 @@
             @forelse ($recentReversals as $adjustment)
                 <tr><td class="whitespace-nowrap">{{ $adjustment->processed_at->format('Y-m-d H:i') }}</td><td class="font-semibold !text-sniper-navy">{{ $adjustment->sale->invoice_number ?? $adjustment->sale->sale_number }}</td><td><span class="{{ $adjustment->type === 'void' ? 'sniper-badge-danger' : 'sniper-badge-warning' }}">{{ strtoupper($adjustment->type) }}</span></td><td class="max-w-sm">{{ $adjustment->reason }}</td><td>{{ $adjustment->authorizedBy->name }}</td><td class="!text-right whitespace-nowrap font-bold !text-red-700">₱{{ number_format((float) $adjustment->amount, 2) }}</td></tr>
             @empty
+                @if ($recentPartialRefunds->isEmpty())
                 <tr><td colspan="6" class="sniper-empty">No voids or refunds for the selected month.</td></tr>
+                @endif
             @endforelse
+            @foreach ($recentPartialRefunds as $refund)
+                <tr><td class="whitespace-nowrap">{{ $refund->processed_at->format('Y-m-d H:i') }}</td><td class="font-semibold !text-sniper-navy">{{ $refund->sale->invoice_number ?? $refund->sale->sale_number }}<div class="mt-1 text-xs font-normal text-sniper-slate">{{ $refund->refund_number }}</div></td><td><span class="sniper-badge-warning">PARTIAL REFUND</span></td><td class="max-w-sm">{{ $refund->reason }}<div class="mt-1 text-xs text-sniper-slate">{{ $refund->items->sum('quantity') }} unit(s) · Inventory {{ $refund->inventory_restocked ? 'restocked' : 'not restocked' }}</div></td><td>{{ $refund->authorizedBy->name }}</td><td class="!text-right whitespace-nowrap font-bold !text-red-700">₱{{ number_format((float) $refund->refund_amount, 2) }}</td></tr>
+            @endforeach
         </tbody></table></div>
     </section>
 
