@@ -42,6 +42,10 @@ class SaleReversalService
                 throw ValidationException::withMessages(['reversal' => 'This sale has already been voided or refunded.']);
             }
 
+            if ($lockedSale->refunds()->exists()) {
+                throw ValidationException::withMessages(['reversal' => 'A sale with partial refunds cannot be voided or fully refunded.']);
+            }
+
             $shouldRestock = $type === SaleAdjustment::TYPE_VOID || $restock;
             $adjustment = SaleAdjustment::query()->create([
                 'sale_id' => $lockedSale->id,

@@ -388,6 +388,7 @@ class SaleTerminal extends Component
                     'is_senior_pwd_discount_eligible' => $line['is_senior_pwd_discount_eligible'],
                     'discount_amount' => $line['discount_amount'],
                     'vat_amount' => $line['vat_amount'],
+                    'vat_exemption_amount' => $line['vat_exemption_amount'],
                     'net_total' => $line['net_total'],
                 ]);
 
