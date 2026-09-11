@@ -67,12 +67,12 @@
                         };
                     @endphp
                     <tr wire:key="sale-{{ $sale->id }}">
-                        <td class="whitespace-nowrap font-semibold !text-sniper-navy">{{ $sale->sale_number }}@if($sale->adjustment)<div class="mt-1"><span class="sniper-badge-danger">{{ strtoupper($sale->adjustment->type) }}</span></div>@endif</td>
+                        <td class="whitespace-nowrap font-semibold !text-sniper-navy">{{ $sale->sale_number }}@if($sale->adjustment)<div class="mt-1"><span class="sniper-badge-danger">{{ strtoupper($sale->adjustment->type) }}</span></div>@elseif($sale->refunds->isNotEmpty())<div class="mt-1"><span class="sniper-badge-warning">PARTIAL REFUND</span></div>@endif</td>
                         <td class="whitespace-nowrap">{{ $sale->completed_at->format('Y-m-d H:i') }}</td>
                         <td>{{ $sale->user->name }}</td>
                         <td><span class="sniper-badge-neutral">{{ $methodLabel }}</span></td>
                         <td class="!text-right whitespace-nowrap">{{ number_format($sale->items->sum('quantity')) }}</td>
-                        <td class="!text-right whitespace-nowrap font-bold {{ $sale->adjustment ? '!text-red-600 line-through' : '!text-sniper-navy' }}">₱{{ number_format((float) $sale->total, 2) }}</td>
+                        <td class="!text-right whitespace-nowrap font-bold {{ $sale->adjustment ? '!text-red-600 line-through' : '!text-sniper-navy' }}">₱{{ number_format($sale->adjustment ? (float) $sale->total : (float) $sale->total - (float) $sale->refunds->sum('refund_amount'), 2) }}@if($sale->refunds->isNotEmpty())<div class="text-xs font-normal text-sniper-slate">Original ₱{{ number_format((float) $sale->total, 2) }}</div>@endif</td>
                         <td class="!text-right whitespace-nowrap">
                             <div class="flex justify-end gap-3">
                                 <a href="{{ route('sales.show', ['sale' => $sale->id], false) }}" wire:navigate class="sniper-action-link">Details</a>

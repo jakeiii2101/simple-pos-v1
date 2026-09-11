@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'discount_amount',
     'vat_amount',
     'net_total',
+    'vat_exemption_amount',
 ])]
 class SaleItem extends Model
 {
@@ -45,6 +46,7 @@ class SaleItem extends Model
             'discount_amount' => 'decimal:2',
             'vat_amount' => 'decimal:2',
             'net_total' => 'decimal:2',
+            'vat_exemption_amount' => 'decimal:2',
         ];
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Livewire\Sales;
 
 use App\Models\Sale;
+use App\Models\SaleRefund;
+use App\Models\SaleRefundItem;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Layout;
@@ -168,17 +170,26 @@ class SalesHistory extends Component
             ->get()
             ->sum('items_sold');
 
+        $activeSaleIds = (clone $activeQuery)->select('sales.id');
+        $refunds = SaleRefund::query()
+            ->whereIn('sale_id', clone $activeSaleIds)
+            ->selectRaw('COALESCE(SUM(gross_amount), 0) as gross_amount, COALESCE(SUM(discount_amount), 0) as discount_amount, COALESCE(SUM(refund_amount), 0) as refund_amount')
+            ->first();
+        $returnedItems = SaleRefundItem::query()
+            ->whereHas('refund', fn ($refundQuery) => $refundQuery->whereIn('sale_id', clone $activeSaleIds))
+            ->sum('quantity');
+
         return view('livewire.sales.sales-history', [
             'sales' => (clone $query)
-                ->with(['user', 'items', 'payment', 'adjustment'])
+                ->with(['user', 'items', 'payment', 'adjustment', 'refunds'])
                 ->latest('completed_at')
                 ->limit(100)
                 ->get(),
             'transactionCount' => (int) ($summary->transaction_count ?? 0),
-            'grossSales' => (float) ($summary->gross_sales ?? 0),
-            'discounts' => (float) ($summary->discounts ?? 0),
-            'netSales' => (float) ($summary->net_sales ?? 0),
-            'itemsSold' => (int) $itemsSold,
+            'grossSales' => (float) ($summary->gross_sales ?? 0) - (float) ($refunds->gross_amount ?? 0),
+            'discounts' => (float) ($summary->discounts ?? 0) - (float) ($refunds->discount_amount ?? 0),
+            'netSales' => (float) ($summary->net_sales ?? 0) - (float) ($refunds->refund_amount ?? 0),
+            'itemsSold' => (int) $itemsSold - (int) $returnedItems,
         ]);
     }
 }

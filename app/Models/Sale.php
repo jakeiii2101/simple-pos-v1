@@ -70,6 +70,11 @@ class Sale extends Model
         return $this->hasOne(SaleAdjustment::class);
     }
 
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(SaleRefund::class);
+    }
+
     protected static function booted(): void
     {
         static::deleting(function (Sale $sale): void {

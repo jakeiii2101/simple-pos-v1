@@ -32,7 +32,7 @@ Route::middleware(['auth', 'active', 'role:admin,cashier'])->group(function () {
     Route::get('pos', SaleTerminal::class)->name('pos');
 
     Route::get('sales/{sale}/invoice', function (Sale $sale) {
-        $sale->load(['items', 'user', 'payment', 'adjustment.authorizedBy']);
+        $sale->load(['items', 'user', 'payment', 'adjustment.authorizedBy', 'refunds.items']);
 
         return view('sales.receipt', compact('sale'));
     })->name('sales.invoice');

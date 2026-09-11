@@ -66,6 +66,14 @@
                 <div style="margin-top:4px;font-size:10px;letter-spacing:normal;font-weight:600;">{{ $sale->adjustment->processed_at->format('Y-m-d H:i') }} · {{ $sale->adjustment->reason }}</div>
             </div>
         @endif
+        @if ($sale->refunds->isNotEmpty())
+            <div style="margin-bottom:14px;border:3px solid #b45309;padding:10px;text-align:center;color:#92400e;font-size:16px;font-weight:900;letter-spacing:.08em;">
+                PARTIALLY REFUNDED · ₱{{ number_format((float) $sale->refunds->sum('refund_amount'), 2) }}
+                @foreach ($sale->refunds->sortBy('processed_at') as $refund)
+                    <div style="margin-top:4px;font-size:10px;letter-spacing:normal;font-weight:600;">{{ $refund->refund_number }} · {{ $refund->processed_at->format('Y-m-d H:i') }} · {{ $refund->items->sum('quantity') }} unit(s)</div>
+                @endforeach
+            </div>
+        @endif
         <div class="center">
             <div class="brand">
                 <img src="/icons/simple-pos-icon.svg" alt="SniperPOS">

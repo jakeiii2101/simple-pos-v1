@@ -61,6 +61,7 @@
 
             <aside class="space-y-6">
                 <livewire:sales.sale-adjustment-panel :sale="$sale" />
+                <livewire:sales.partial-refund-panel :sale="$sale" />
                 <div class="sniper-card p-5">
                     <div class="sniper-kicker">Sale summary</div>
                     <div class="mt-4 space-y-3 text-sm">
