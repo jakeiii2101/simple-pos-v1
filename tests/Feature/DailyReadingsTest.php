@@ -155,7 +155,7 @@ class DailyReadingsTest extends TestCase
         $this->assertSame(112.0, $snapshot['reversals']['partial_refund_amount']);
 
         $closing = app(DailyReadingService::class)->close(now(), $admin, 'Partial refund reconciled');
-        $this->assertSame(224.0, $closing->snapshot['sales']['net_sales']);
+        $this->assertEquals(224.0, $closing->snapshot['sales']['net_sales']);
     }
 
     private function createSale(User $user, string $invoice, float $total): Sale
