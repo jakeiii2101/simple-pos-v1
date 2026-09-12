@@ -42,6 +42,7 @@ class DailyReadingService
             ->whereBetween('processed_at', [$start, $end])
             ->selectRaw("COUNT(*) as count, COALESCE(SUM(amount), 0) as amount, COALESCE(SUM(CASE WHEN type = 'void' THEN amount ELSE 0 END), 0) as void_amount, COALESCE(SUM(CASE WHEN type = 'refund' THEN amount ELSE 0 END), 0) as refund_amount")
             ->first();
+        $partialRefunds = app(RefundReconciliation::class)->between($start, $end);
 
         return [
             'business_date' => $date->toDateString(),
@@ -54,24 +55,26 @@ class DailyReadingService
             ],
             'sales' => [
                 'transaction_count' => (int) $totals->transaction_count,
-                'gross_sales' => round((float) $totals->gross_sales, 2),
-                'discounts' => round((float) $totals->discounts, 2),
-                'vat_exemptions' => round((float) $totals->vat_exemptions, 2),
-                'net_sales' => round((float) $totals->net_sales, 2),
+                'gross_sales' => round((float) $totals->gross_sales - $partialRefunds['gross_amount'], 2),
+                'discounts' => round((float) $totals->discounts - $partialRefunds['discount_amount'], 2),
+                'vat_exemptions' => round((float) $totals->vat_exemptions - $partialRefunds['vat_exemption_amount'], 2),
+                'net_sales' => round((float) $totals->net_sales - $partialRefunds['refund_amount'], 2),
             ],
             'tax' => [
-                'vatable_sales' => round((float) $totals->vatable_sales, 2),
-                'vat_amount' => round((float) $totals->vat_amount, 2),
-                'vat_exempt_sales' => round((float) $totals->vat_exempt_sales, 2),
-                'zero_rated_sales' => round((float) $totals->zero_rated_sales, 2),
-                'non_vat_sales' => round((float) $totals->non_vat_sales, 2),
+                'vatable_sales' => round((float) $totals->vatable_sales - $partialRefunds['vatable_sales'], 2),
+                'vat_amount' => round((float) $totals->vat_amount - $partialRefunds['vat_amount'], 2),
+                'vat_exempt_sales' => round((float) $totals->vat_exempt_sales - $partialRefunds['vat_exempt_sales'], 2),
+                'zero_rated_sales' => round((float) $totals->zero_rated_sales - $partialRefunds['zero_rated_sales'], 2),
+                'non_vat_sales' => round((float) $totals->non_vat_sales - $partialRefunds['non_vat_sales'], 2),
             ],
             'payments' => $payments,
             'reversals' => [
-                'count' => (int) $reversals->count,
-                'amount' => round((float) $reversals->amount, 2),
+                'count' => (int) $reversals->count + $partialRefunds['refund_count'],
+                'amount' => round((float) $reversals->amount + $partialRefunds['refund_amount'], 2),
                 'void_amount' => round((float) $reversals->void_amount, 2),
-                'refund_amount' => round((float) $reversals->refund_amount, 2),
+                'refund_amount' => round((float) $reversals->refund_amount + $partialRefunds['refund_amount'], 2),
+                'partial_refund_count' => $partialRefunds['refund_count'],
+                'partial_refund_amount' => round($partialRefunds['refund_amount'], 2),
             ],
         ];
     }
