@@ -8,7 +8,9 @@
             @foreach($readiness['checks'] as $check)
                 <div class="rounded-xl bg-white p-4 ring-1 {{ $check['passed'] ? 'ring-emerald-200' : ($check['severity'] === 'warning' ? 'ring-amber-200' : 'ring-red-200') }}">
                     <div class="flex items-center justify-between gap-3"><span class="text-sm font-bold text-sniper-navy">{{ $check['label'] }}</span><span class="{{ $check['passed'] ? 'sniper-badge-success' : ($check['severity'] === 'warning' ? 'sniper-badge-warning' : 'sniper-badge-danger') }}">{{ $check['passed'] ? 'Pass' : ucfirst($check['severity']) }}</span></div>
-                    @if(! $check['passed'])<p class="mt-2 text-xs leading-5 text-sniper-slate">{{ $check['remediation'] }}</p>@endif
+                    @if (! $check['passed'])
+                        <p class="mt-2 text-xs leading-5 text-sniper-slate">{{ $check['remediation'] }}</p>
+                    @endif
                 </div>
             @endforeach
         </div>
