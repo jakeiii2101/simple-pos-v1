@@ -1,3 +1,17 @@
+# SniperPOS
+
+**Precision in Every Sale.**
+
+SniperPOS is a Laravel/Livewire web and PWA point-of-sale system with inventory, payments, immutable audit history, and BIR-ready operational controls for Philippine businesses.
+
+It includes sequential Sales Invoices, tax and statutory-discount calculations, controlled void/refund workflows, X/Z readings, BIR exports, invoice diagnostics, and verified private backups.
+
+These controls support registration and audit readiness. They do **not** mean SniperPOS is BIR-accredited or authorize a taxpayer to use it without completing the applicable BIR/RDO process.
+
+Before production deployment, review [Final BIR Operational Acceptance](docs/BIR_FINAL_ACCEPTANCE.md), run `php artisan bir:preflight --production`, and follow the [deployment runbook](docs/DEPLOYMENT.md).
+
+---
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

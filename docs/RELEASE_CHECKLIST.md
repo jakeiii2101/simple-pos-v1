@@ -32,6 +32,11 @@ This checklist is the final gate before tagging the Web/PWA release candidate an
 - [ ] Dashboard KPIs reflect current database values.
 - [ ] Reports show gross sales, discounts, net sales, payment breakdown, top products, and inventory metrics.
 - [ ] Audit Log is admin-only and records critical events.
+- [ ] BIR Settings exactly match taxpayer and RDO records.
+- [ ] Regular, Senior Citizen/PWD, void, full refund, and partial refund tests reconcile.
+- [ ] X-reading, Z-reading, BIR Sales CSV, Reversal CSV, and Audit CSV reconcile.
+- [ ] `php artisan bir:preflight --production` reports no blocking failures.
+- [ ] `docs/BIR_FINAL_ACCEPTANCE.md` is signed and retained with the release evidence.
 
 ## PWA and responsive QA
 

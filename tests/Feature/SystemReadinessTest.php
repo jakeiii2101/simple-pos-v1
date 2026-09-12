@@ -4,12 +4,14 @@ namespace Tests\Feature;
 
 use App\Livewire\Settings\SystemReadiness;
 use App\Models\AuditLog;
+use App\Models\BirSetting;
 use App\Models\InvoiceSequence;
 use App\Models\Sale;
 use App\Models\User;
 use App\Support\DatabaseBackupService;
 use App\Support\SystemReadinessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -104,6 +106,47 @@ class SystemReadinessTest extends TestCase
         $content = $response->streamedContent();
         $this->assertStringContainsString('test.export', $content);
         $this->assertStringContainsString("'=Unsafe audit description", $content);
+    }
+
+    public function test_final_preflight_passes_when_blocking_controls_are_ready(): void
+    {
+        Storage::fake('local');
+        $admin = User::factory()->admin()->create();
+        BirSetting::query()->create([
+            'registered_name' => 'Sniper Retail Corporation',
+            'tin' => '123-456-789-00000',
+            'branch_code' => '00000',
+            'registered_address' => 'General Santos City',
+            'rdo_code' => '110',
+            'tax_type' => BirSetting::TAX_TYPE_VAT,
+            'is_active' => true,
+        ]);
+        InvoiceSequence::query()->create([
+            'document_type' => InvoiceSequence::TYPE_SALES_INVOICE,
+            'branch_code' => '00000',
+            'prefix' => 'SI-',
+            'current_number' => 0,
+            'starting_number' => 1,
+            'is_active' => true,
+        ]);
+        $backup = 'backups/sniperpos-'.now()->format('Ymd-His').'.sql';
+        Storage::disk('local')->put($backup, 'verified-backup');
+        Storage::disk('local')->put($backup.'.sha256', hash_file('sha256', Storage::disk('local')->path($backup)).'  '.basename($backup));
+
+        $readiness = app(SystemReadinessService::class)->inspect();
+
+        $this->assertTrue($readiness['release_ready']);
+        $this->assertSame(0, $readiness['blocking_failures']);
+        $this->assertTrue($readiness['latest_backup_checksum_valid']);
+        $this->assertNotNull($admin);
+    }
+
+    public function test_production_preflight_command_fails_when_blocking_controls_are_missing(): void
+    {
+        $exitCode = Artisan::call('bir:preflight', ['--production' => true]);
+
+        $this->assertSame(1, $exitCode);
+        $this->assertStringContainsString('blocking check(s) failed', Artisan::output());
     }
 
     private function createSale(User $user, string $invoice): Sale
