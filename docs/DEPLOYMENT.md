@@ -61,6 +61,8 @@ php artisan optimize:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+php artisan database:backup
+php artisan bir:preflight --production
 ```
 
 Ensure the web server serves Laravel from the `public/` directory and forces HTTPS. The application health endpoint is `/up`.
@@ -68,6 +70,8 @@ Ensure the web server serves Laravel from the `public/` directory and forces HTT
 ## Post-deploy smoke test
 
 Confirm login, dashboard, POS, one controlled test sale, receipt, inventory, Sales History, Reports, Users, and Audit Log. Verify the manifest and service worker are served over HTTPS and that an installed PWA opens in standalone mode.
+
+Complete `docs/BIR_FINAL_ACCEPTANCE.md`, retain the evidence pack, and obtain the applicable taxpayer/RDO approval before live invoice issuance. A successful technical preflight does not constitute BIR accreditation.
 
 For the controlled sale, use a test product/account and reverse or otherwise reconcile the test transaction according to the site's operational procedure; do not directly edit completed financial records in the database.
 
