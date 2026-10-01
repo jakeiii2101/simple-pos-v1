@@ -157,11 +157,12 @@ class ProductBulkImportTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $this->actingAs($admin)
-            ->get('/products')
-            ->assertOk()
+        Livewire::actingAs($admin)
+            ->test(ProductList::class)
             ->assertSee('Import Products')
-            ->assertSee('CSV or XLSX');
+            ->call('openImport')
+            ->assertSee('CSV or XLSX')
+            ->assertSee('Download CSV Template');
     }
 
     /**
