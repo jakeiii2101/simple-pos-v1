@@ -5,13 +5,19 @@ namespace App\Livewire\Products;
 use App\Models\Category;
 use App\Models\Product;
 use App\Support\Audit;
+use App\Support\ProductBulkImporter;
+use App\Support\ProductImportReader;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Layout('layouts.app')]
 class ProductList extends Component
 {
+    use WithFileUploads;
+
     public ?int $editingId = null;
 
     public ?int $categoryId = null;
@@ -38,6 +44,16 @@ class ProductList extends Component
 
     public bool $showForm = false;
 
+    public bool $showImport = false;
+
+    public $importFile = null;
+
+    /** @var array{imported:int,failed:int}|null */
+    public ?array $importSummary = null;
+
+    /** @var array<int, array{row:int,message:string}> */
+    public array $importErrors = [];
+
     public function mount(): void
     {
         $this->showForm = request()->boolean('create');
@@ -54,7 +70,107 @@ class ProductList extends Component
     public function create(): void
     {
         $this->resetForm();
+        $this->showImport = false;
         $this->showForm = true;
+    }
+
+    public function openImport(): void
+    {
+        $this->resetForm();
+        $this->resetImportState();
+        $this->showImport = true;
+    }
+
+    public function closeImport(): void
+    {
+        $this->resetImportState();
+        $this->showImport = false;
+    }
+
+    public function importProducts(): void
+    {
+        $this->resetValidation('importFile');
+        $this->importSummary = null;
+        $this->importErrors = [];
+
+        $this->validate([
+            'importFile' => ['required', 'file', 'max:5120'],
+        ], [
+            'importFile.max' => 'The import file may not be larger than 5 MB.',
+        ]);
+
+        $extension = strtolower((string) $this->importFile->getClientOriginalExtension());
+
+        if (! in_array($extension, ['csv', 'xlsx'], true)) {
+            $this->addError('importFile', 'Only CSV and XLSX files are supported.');
+            return;
+        }
+
+        $reader = app(ProductImportReader::class);
+        $importer = app(ProductBulkImporter::class);
+
+        $rows = $reader->read($this->importFile->getRealPath(), $extension);
+        $result = $importer->import($rows, $this->importFile->getClientOriginalName());
+
+        $this->importSummary = [
+            'imported' => $result['imported'],
+            'failed' => $result['failed'],
+        ];
+        $this->importErrors = $result['errors'];
+        $this->importFile = null;
+
+        if ($result['imported'] > 0) {
+            session()->flash(
+                'success',
+                $result['imported'].' product'.($result['imported'] === 1 ? '' : 's').' imported successfully.'
+            );
+        }
+
+        if ($result['failed'] > 0) {
+            session()->flash(
+                'error',
+                $result['failed'].' row'.($result['failed'] === 1 ? '' : 's').' could not be imported. Review the import results below.'
+            );
+        }
+    }
+
+    public function downloadImportTemplate(): StreamedResponse
+    {
+        return response()->streamDownload(function (): void {
+            $handle = fopen('php://output', 'wb');
+
+            fputcsv($handle, [
+                'category',
+                'sku',
+                'barcode',
+                'name',
+                'cost_price',
+                'selling_price',
+                'stock_quantity',
+                'low_stock_level',
+                'status',
+                'tax_type',
+                'senior_pwd_eligible',
+            ]);
+
+            fputcsv($handle, [
+                'Supermarket',
+                'SAMPLE-001',
+                '480000000001',
+                'Sample Product',
+                '50.00',
+                '65.00',
+                '20',
+                '5',
+                'active',
+                'vatable',
+                'no',
+            ]);
+
+            fclose($handle);
+        }, 'sniperpos-product-import-template.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function edit(int $productId): void
@@ -73,6 +189,7 @@ class ProductList extends Component
         $this->status = $product->status;
         $this->taxType = $product->tax_type;
         $this->isSeniorPwdDiscountEligible = $product->is_senior_pwd_discount_eligible;
+        $this->showImport = false;
         $this->showForm = true;
         $this->resetValidation();
     }
@@ -235,6 +352,14 @@ class ProductList extends Component
         $this->isSeniorPwdDiscountEligible = false;
         $this->showForm = false;
         $this->resetValidation();
+    }
+
+    protected function resetImportState(): void
+    {
+        $this->importFile = null;
+        $this->importSummary = null;
+        $this->importErrors = [];
+        $this->resetValidation('importFile');
     }
 
     public function render()
