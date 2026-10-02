@@ -63,6 +63,21 @@ class SaleDetailsTest extends TestCase
             ->assertSee('₱90.00');
     }
 
+    public function test_auto_print_invoice_request_includes_one_time_print_script(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $sale = $this->createCompletedSale($admin, Payment::METHOD_CASH);
+
+        $this->actingAs($admin)
+            ->get(route('sales.invoice', [
+                'sale' => $sale->id,
+                'auto_print' => 1,
+            ], false))
+            ->assertOk()
+            ->assertSee("url.searchParams.delete('auto_print')", false)
+            ->assertSee('window.setTimeout(() => window.print(), 250)', false);
+    }
+
     public function test_legacy_sale_without_payment_record_still_renders_as_cash(): void
     {
         $admin = User::factory()->admin()->create();
