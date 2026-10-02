@@ -12,9 +12,11 @@ use App\Livewire\Reports\DailyReadings;
 use App\Livewire\Reports\ReportsDashboard;
 use App\Livewire\Sales\SalesHistory;
 use App\Livewire\Settings\BirSettings;
+use App\Livewire\Settings\PrinterSettings;
 use App\Livewire\Settings\SystemReadiness;
 use App\Livewire\Users\UserManagement;
 use App\Models\DailyClosing;
+use App\Models\PrinterSetting;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Route;
 
@@ -34,7 +36,9 @@ Route::middleware(['auth', 'active', 'role:admin,cashier'])->group(function () {
     Route::get('sales/{sale}/invoice', function (Sale $sale) {
         $sale->load(['items', 'user', 'payment', 'adjustment.authorizedBy', 'refunds.items']);
 
-        return view('sales.receipt', compact('sale'));
+        $printerSetting = PrinterSetting::current();
+
+        return view('sales.receipt', compact('sale', 'printerSetting'));
     })->name('sales.invoice');
 
     Route::get('sales/{sale}/receipt', fn (Sale $sale) => redirect()->route('sales.invoice', $sale));
@@ -57,13 +61,16 @@ Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
     Route::get('daily-readings/{dailyClosing}/print', function (DailyClosing $dailyClosing) {
         $dailyClosing->load('closedBy');
 
-        return view('reports.daily-closing', compact('dailyClosing'));
+        $printerSetting = PrinterSetting::current();
+
+        return view('reports.daily-closing', compact('dailyClosing', 'printerSetting'));
     })->name('daily-readings.print');
     Route::get('reports/export/bir-sales', [ReportsExportController::class, 'sales'])->name('reports.export.sales');
     Route::get('reports/export/reversals', [ReportsExportController::class, 'reversals'])->name('reports.export.reversals');
     Route::get('users', UserManagement::class)->name('users');
     Route::get('audit-logs', AuditLogList::class)->name('audit-logs');
     Route::get('settings/bir', BirSettings::class)->name('settings.bir');
+    Route::get('settings/printer', PrinterSettings::class)->name('settings.printer');
     Route::get('settings/readiness', SystemReadiness::class)->name('settings.readiness');
     Route::get('compliance/backups/{filename}', [ComplianceFilesController::class, 'backup'])->name('compliance.backup');
     Route::get('compliance/audit-export', [ComplianceFilesController::class, 'audit'])->name('compliance.audit');
