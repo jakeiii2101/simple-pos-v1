@@ -5,33 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sales Invoice {{ $sale->invoice_number ?? $sale->sale_number }}</title>
     <style>
-        :root { --navy: #0F2747; --red: #E50914; --slate: #64748B; --line: #CBD5E1; }
+        :root {
+            --navy: #0F2747;
+            --red: #E50914;
+            --slate: #64748B;
+            --line: #CBD5E1;
+            --receipt-width: {{ (int) $printerSetting->paper_width_mm }}mm;
+            --receipt-padding: {{ (int) $printerSetting->content_padding_mm }}mm;
+            --receipt-font-size: {{ (int) $printerSetting->font_size_px }}px;
+        }
         * { box-sizing: border-box; }
-        body { font-family: Arial, Helvetica, sans-serif; color: #0f172a; margin: 0; background: #f1f5f9; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #0f172a; margin: 0; background: #f1f5f9; font-size: var(--receipt-font-size); }
         .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 18px auto; padding: 0 12px; }
         .actions a, .actions button { display: inline-flex; align-items: center; justify-content: center; padding: 10px 14px; border: 1px solid #cbd5e1; background: #fff; color: var(--navy); border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 13px; font-weight: 700; }
         .actions .primary { border-color: var(--red); background: var(--red); color: #fff; }
-        .receipt { width: 420px; max-width: calc(100% - 24px); margin: 0 auto 28px; background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 12px 30px rgba(15,39,71,.08); }
+        .receipt { width: var(--receipt-width); max-width: calc(100% - 24px); margin: 0 auto 28px; background: #fff; padding: var(--receipt-padding); border-radius: 12px; box-shadow: 0 12px 30px rgba(15,39,71,.08); overflow-wrap: anywhere; }
         .brand { display: flex; align-items: center; justify-content: center; gap: 10px; }
         .brand img { width: 38px; height: 38px; object-fit: contain; }
         .brand-name { margin: 0; color: var(--navy); font-size: 23px; font-weight: 800; letter-spacing: -.02em; }
-        .tagline { margin-top: 3px; color: var(--slate); font-size: 11px; }
+        .tagline { margin-top: 3px; color: var(--slate); font-size: .85em; }
         .center { text-align: center; }
-        .muted { color: var(--slate); font-size: 12px; }
-        .row { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; }
+        .muted { color: var(--slate); font-size: .9em; }
+        .row { display: flex; justify-content: space-between; gap: 8px; margin: 6px 0; }
         .row span:last-child { text-align: right; }
         .section { margin-top: 16px; padding-top: 12px; border-top: 1px dashed #94a3b8; }
         .item { padding: 10px 0; border-bottom: 1px dashed #cbd5e1; }
         .item-name { font-weight: 700; color: var(--navy); }
         .discount { color: #047857; }
-        .total { padding-top: 8px; border-top: 1px solid #cbd5e1; font-size: 18px; font-weight: 800; color: var(--navy); }
-        .payment-label { text-transform: uppercase; letter-spacing: .08em; font-size: 10px; font-weight: 800; color: var(--slate); }
+        .total { padding-top: 8px; border-top: 1px solid #cbd5e1; font-size: 1.35em; font-weight: 800; color: var(--navy); }
+        .payment-label { text-transform: uppercase; letter-spacing: .08em; font-size: .8em; font-weight: 800; color: var(--slate); }
         .footer { margin-top: 22px; padding-top: 14px; border-top: 1px dashed #94a3b8; text-align: center; }
         .footer strong { color: var(--navy); }
+        @page { margin: 0; }
         @media print {
-            body { background: #fff; }
+            html, body { width: var(--receipt-width); background: #fff; }
+            body { margin: 0; }
             .actions { display: none !important; }
-            .receipt { width: 80mm; max-width: 80mm; margin: 0 auto; padding: 6mm 4mm; border-radius: 0; box-shadow: none; }
+            .receipt { width: var(--receipt-width); max-width: var(--receipt-width); margin: 0; padding: var(--receipt-padding); border-radius: 0; box-shadow: none; }
         }
     </style>
 </head>
@@ -54,6 +64,7 @@
     <div class="actions">
         @if (auth()->user()?->isAdmin())
             <a href="{{ route('sales.show', ['sale' => $sale->id], false) }}">Sale Details</a>
+            <a href="{{ route('settings.printer', [], false) }}">Printer Settings</a>
         @endif
         <button type="button" onclick="window.print()">Print Sales Invoice</button>
         <a href="{{ route('pos', [], false) }}" class="primary">New Sale</a>
@@ -76,7 +87,9 @@
         @endif
         <div class="center">
             <div class="brand">
-                <img src="/icons/simple-pos-icon.svg" alt="SniperPOS">
+                @if ($printerSetting->show_logo)
+                    <img src="/icons/simple-pos-icon.svg" alt="SniperPOS">
+                @endif
                 <h1 class="brand-name">SniperPOS</h1>
             </div>
             <div class="tagline">Precision in Every Sale.</div>
