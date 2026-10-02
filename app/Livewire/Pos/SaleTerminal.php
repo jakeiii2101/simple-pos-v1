@@ -432,6 +432,13 @@ class SaleTerminal extends Component
         $this->resetBuyerState();
         $this->resetValidation();
         session()->flash('success', 'Sale completed successfully.');
+
+        $this->redirect(
+            route('sales.invoice', [
+                'sale' => $sale->id,
+                'auto_print' => 1,
+            ], absolute: false),
+        );
     }
 
     private function cartSubtotal(): float
