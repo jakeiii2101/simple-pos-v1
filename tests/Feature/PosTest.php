@@ -40,7 +40,7 @@ class PosTest extends TestCase
             barcode: '4987176219619',
         );
 
-        Livewire::actingAs($cashier)
+        $component = Livewire::actingAs($cashier)
             ->test(SaleTerminal::class)
             ->call('addProduct', $product->id)
             ->call('increase', $product->id)
@@ -50,6 +50,13 @@ class PosTest extends TestCase
             ->assertSet('cart', []);
 
         $sale = Sale::query()->firstOrFail();
+
+        $component->assertRedirect(
+            route('sales.invoice', [
+                'sale' => $sale->id,
+                'auto_print' => 1,
+            ], absolute: false),
+        );
 
         $this->assertSame('240.00', $sale->subtotal);
         $this->assertSame('SI-000000000001', $sale->invoice_number);
