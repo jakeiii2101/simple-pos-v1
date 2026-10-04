@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Forms;
 
+use App\Models\Account;
 use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -40,9 +42,48 @@ class LoginForm extends Form
         if (! Auth::attempt($credentials, $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
+            $user = User::withoutGlobalScope('account')
+                ->where('email', $this->email)
+                ->first();
+
+            if ($user !== null && Hash::check($this->password, $user->password)) {
+                if ($user->isPending()) {
+                    throw ValidationException::withMessages([
+                        'form.email' => 'Your SniperPOS account request is still awaiting platform-owner approval.',
+                    ]);
+                }
+
+                if ($user->status === User::STATUS_INACTIVE) {
+                    throw ValidationException::withMessages([
+                        'form.email' => 'This SniperPOS user account is inactive.',
+                    ]);
+                }
+            }
+
             throw ValidationException::withMessages([
                 'form.email' => trans('auth.failed'),
             ]);
+        }
+
+        $user = Auth::user();
+
+        if (! $user->isPlatformOwner()) {
+            $account = $user->account;
+
+            if ($account === null || $account->status !== Account::STATUS_ACTIVE) {
+                Auth::logout();
+
+                $message = match ($account?->status) {
+                    Account::STATUS_SUSPENDED => 'This SniperPOS business account is currently suspended.',
+                    Account::STATUS_REJECTED => 'This SniperPOS business account request was not approved.',
+                    Account::STATUS_PENDING => 'Your SniperPOS account request is still awaiting platform-owner approval.',
+                    default => 'This SniperPOS business account is not active.',
+                };
+
+                throw ValidationException::withMessages([
+                    'form.email' => $message,
+                ]);
+            }
         }
 
         RateLimiter::clear($this->throttleKey());
