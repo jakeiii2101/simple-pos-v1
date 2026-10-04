@@ -63,12 +63,14 @@ return new class extends Migration
             ->value('id');
 
         if ($firstAdminId !== null) {
-            DB::table('users')->where('id', $firstAdminId)->update(['is_platform_owner' => true]);
             DB::table('accounts')->where('id', $legacyAccountId)->update([
                 'owner_user_id' => $firstAdminId,
-                'approved_by' => $firstAdminId,
             ]);
         }
+
+        // Platform-owner permission is intentionally not auto-assigned.
+        // After deployment, grant it explicitly to the trusted owner with:
+        // php artisan platform:owner owner@example.com
 
         foreach ($this->tenantTables as $tableName) {
             if (! Schema::hasTable($tableName)) {
