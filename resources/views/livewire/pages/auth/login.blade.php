@@ -51,6 +51,10 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
 
         <x-primary-button class="w-full py-3">{{ __('Log in') }}</x-primary-button>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm text-sniper-slate">
+            Need your own SniperPOS workspace?
+            <a href="{{ route('account.request', [], false) }}" wire:navigate class="font-semibold text-sniper-navy hover:text-sniper-red">Create Account</a>
+        </div>
         <a href="/" class="block text-center text-sm font-medium text-sniper-slate hover:text-sniper-red">← Back to SniperPOS home</a>
     </form>
 </div>
