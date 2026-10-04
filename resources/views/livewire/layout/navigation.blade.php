@@ -39,6 +39,10 @@ new class extends Component
                     ['route' => 'pos', 'label' => 'POS', 'icon' => 'cart'],
                 ];
 
+                if (auth()->user()->isPlatformOwner()) {
+                    $items[] = ['route' => 'platform.account-approvals', 'label' => 'Account Approvals', 'icon' => 'users'];
+                }
+
                 if (auth()->user()->isAdmin()) {
                     $items = array_merge($items, [
                         ['route' => 'products', 'label' => 'Products', 'icon' => 'box'],
@@ -111,6 +115,9 @@ new class extends Component
                 <div class="min-w-0">
                     <div class="truncate text-sm font-semibold text-white" x-data="{{ json_encode(['name' => auth()->user()->name]) }}" x-text="name" x-on:profile-updated.window="name = $event.detail.name"></div>
                     <div class="truncate text-xs text-slate-400">{{ auth()->user()->email }}</div>
+                    @if (auth()->user()->business)
+                        <div class="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ auth()->user()->business->name }}</div>
+                    @endif
                 </div>
             </div>
 
