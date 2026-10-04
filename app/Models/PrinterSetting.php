@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
+    'business_id',
     'paper_width_mm',
     'content_padding_mm',
     'font_size_px',
