@@ -4,7 +4,9 @@
 
 - SniperPOS is online-first. Offline sales and offline-to-online transaction synchronization are deferred to a later phase.
 - When disconnected, the PWA displays a static offline page. Authenticated sales, reports, receipts, and other business HTML pages are deliberately not cached.
-- V1 permissions use the Admin and Cashier roles. Complex custom permissions are deferred.
+- Each approved business workspace uses the Admin and Cashier roles. Complex custom permissions are deferred.
+- Public account creation is request-based: a business remains locked until the single CLI-designated SniperPOS platform owner approves it.
+- SniperPOS uses shared-database multi-tenancy with strict `account_id` scoping; it does not provision a separate physical database per business.
 - Customer loyalty, coupon campaigns, advanced multi-branch functions, and other non-roadmap enhancements are outside this release.
 
 ## Mobile packaging dependency
