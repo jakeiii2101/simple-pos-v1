@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['business_id', 'name', 'email', 'password', 'role', 'status', 'is_platform_owner'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -24,6 +25,11 @@ class User extends Authenticatable
     public const STATUS_ACTIVE = 'active';
 
     public const STATUS_INACTIVE = 'inactive';
+
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class);
+    }
 
     public function isAdmin(): bool
     {
@@ -40,6 +46,11 @@ class User extends Authenticatable
         return $this->status === self::STATUS_ACTIVE;
     }
 
+    public function isPlatformOwner(): bool
+    {
+        return (bool) $this->is_platform_owner;
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -50,6 +61,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_platform_owner' => 'boolean',
         ];
     }
 }
