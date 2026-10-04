@@ -96,7 +96,7 @@
                     <a href="{{ route('pos') }}" class="red-shadow rounded-xl bg-[#E50914] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#c90812] sm:px-7">Open POS</a>
                 @else
                     <a href="{{ route('login') }}" class="hidden px-4 py-3 text-sm font-semibold text-[#0F2747] transition hover:text-[#E50914] sm:inline-flex">Log In</a>
-                    <a href="{{ route('login') }}" class="red-shadow rounded-xl bg-[#E50914] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#c90812] sm:px-7">Get Started</a>
+                    <a href="{{ route('account.create') }}" class="red-shadow rounded-xl bg-[#E50914] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#c90812] sm:px-7">Create Account</a>
                 @endauth
             </div>
         </div>
@@ -135,8 +135,8 @@
                                 <span aria-hidden="true">→</span>
                             </a>
                         @else
-                            <a href="{{ route('login') }}" class="red-shadow inline-flex items-center justify-center gap-3 rounded-xl bg-[#E50914] px-8 py-4 font-display text-base font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#c90812]">
-                                Get Started
+                            <a href="{{ route('account.create') }}" class="red-shadow inline-flex items-center justify-center gap-3 rounded-xl bg-[#E50914] px-8 py-4 font-display text-base font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#c90812]">
+                                Create Account
                                 <span aria-hidden="true">→</span>
                             </a>
                         @endauth
@@ -308,7 +308,7 @@
                 @auth
                     <a href="{{ route('pos') }}" class="rounded-xl bg-[#E50914] px-7 py-4 font-display font-bold text-white">Open POS →</a>
                 @else
-                    <a href="{{ route('login') }}" class="rounded-xl bg-[#E50914] px-7 py-4 font-display font-bold text-white">Get Started →</a>
+                    <a href="{{ route('account.create') }}" class="rounded-xl bg-[#E50914] px-7 py-4 font-display font-bold text-white">Create Account →</a>
                 @endauth
             </div>
         </section>
