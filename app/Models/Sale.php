@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToAccount;
+
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,7 +42,7 @@ use LogicException;
 ])]
 class Sale extends Model
 {
-    use HasFactory;
+    use BelongsToAccount, HasFactory;
 
     public const STATUS_COMPLETED = 'completed';
     public const DISCOUNT_FIXED = 'fixed';
