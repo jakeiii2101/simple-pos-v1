@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsurePlatformOwner;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\SecurityHeaders;
@@ -32,6 +34,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'active' => EnsureUserIsActive::class,
+            'account.active' => EnsureAccountIsActive::class,
+            'platform_owner' => EnsurePlatformOwner::class,
             'role' => EnsureUserHasRole::class,
         ]);
     })

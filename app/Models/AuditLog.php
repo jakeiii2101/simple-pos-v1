@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToAccount;
+
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +21,7 @@ use LogicException;
 ])]
 class AuditLog extends Model
 {
+    use BelongsToAccount;
     public const UPDATED_AT = null;
 
     protected static function booted(): void

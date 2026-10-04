@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToAccount;
+
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class PrinterSetting extends Model
 {
+    use BelongsToAccount;
     public const DEFAULT_PAPER_WIDTH_MM = 80;
 
     public const DEFAULT_CONTENT_PADDING_MM = 4;

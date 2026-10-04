@@ -17,7 +17,8 @@ class LandingPageTest extends TestCase
             ->assertSee('SniperPOS')
             ->assertSee('Precision in')
             ->assertSee('Every Sale.')
-            ->assertSee('Get Started')
+            ->assertSee('Create Account')
+            ->assertSee(route('account.create'), false)
             ->assertSee(route('login'), false);
     }
 

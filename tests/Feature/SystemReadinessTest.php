@@ -69,26 +69,32 @@ class SystemReadinessTest extends TestCase
         unlink($source);
     }
 
-    public function test_backup_creation_requires_current_admin_password(): void
+    public function test_backup_creation_requires_platform_owner_and_current_password(): void
     {
-        $admin = User::factory()->admin()->create();
+        $platformOwner = User::factory()->admin()->create([
+            'is_platform_owner' => true,
+        ]);
 
-        Livewire::actingAs($admin)->test(SystemReadiness::class)
+        Livewire::actingAs($platformOwner)->test(SystemReadiness::class)
             ->set('authorizationPassword', 'wrong-password')
             ->call('createBackup')
             ->assertHasErrors('authorizationPassword');
     }
 
-    public function test_backup_download_is_admin_only_and_rejects_unsafe_filename(): void
+    public function test_backup_download_is_platform_owner_only_and_rejects_unsafe_filename(): void
     {
         Storage::fake('local');
         Storage::disk('local')->put('backups/sniperpos-20260911-020000.sql', 'backup-content');
+        $platformOwner = User::factory()->admin()->create([
+            'is_platform_owner' => true,
+        ]);
         $admin = User::factory()->admin()->create();
         $cashier = User::factory()->create();
 
-        $this->actingAs($admin)->get('/compliance/backups/sniperpos-20260911-020000.sql')->assertOk()->assertDownload();
+        $this->actingAs($platformOwner)->get('/compliance/backups/sniperpos-20260911-020000.sql')->assertOk()->assertDownload();
+        $this->actingAs($admin)->get('/compliance/backups/sniperpos-20260911-020000.sql')->assertForbidden();
         $this->actingAs($cashier)->get('/compliance/backups/sniperpos-20260911-020000.sql')->assertForbidden();
-        $this->actingAs($admin)->get('/compliance/backups/not-a-backup.sql')->assertNotFound();
+        $this->actingAs($platformOwner)->get('/compliance/backups/not-a-backup.sql')->assertNotFound();
     }
 
     public function test_admin_can_export_formula_safe_audit_csv(): void
@@ -111,7 +117,11 @@ class SystemReadinessTest extends TestCase
     public function test_final_preflight_passes_when_blocking_controls_are_ready(): void
     {
         Storage::fake('local');
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->create([
+            'is_platform_owner' => true,
+        ]);
+        $this->actingAs($admin);
+
         BirSetting::query()->create([
             'registered_name' => 'Sniper Retail Corporation',
             'tin' => '123-456-789-00000',

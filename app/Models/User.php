@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Concerns\BelongsToAccount;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -15,7 +16,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use BelongsToAccount, HasFactory, Notifiable;
 
     public const ROLE_ADMIN = 'admin';
 
@@ -24,6 +25,8 @@ class User extends Authenticatable
     public const STATUS_ACTIVE = 'active';
 
     public const STATUS_INACTIVE = 'inactive';
+
+    public const STATUS_PENDING = 'pending';
 
     public function isAdmin(): bool
     {
@@ -40,6 +43,16 @@ class User extends Authenticatable
         return $this->status === self::STATUS_ACTIVE;
     }
 
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isPlatformOwner(): bool
+    {
+        return (bool) $this->is_platform_owner;
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -50,6 +63,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_platform_owner' => 'boolean',
         ];
     }
 }

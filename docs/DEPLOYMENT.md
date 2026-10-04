@@ -104,6 +104,24 @@ If using the Vercel CLI, link the repository first and run the migration with th
 
 Never run `php artisan migrate:fresh` against production.
 
+### Assign the SniperPOS platform owner
+
+The account-approval feature deliberately does **not** auto-promote an administrator to platform owner. After the tenancy migration has completed, explicitly grant approval authority to your trusted owner login:
+
+```bash
+php artisan platform:owner owner@example.com
+```
+
+Replace `owner@example.com` with the exact email address of the SniperPOS account that you personally control. The command removes platform-owner permission from any previous holder so only one user has account-approval authority.
+
+After assignment, that user will see **Account Approvals** in the sidebar. New public account requests remain pending until this platform owner approves them.
+
+### Business-account isolation
+
+SniperPOS uses one application/database with account-scoped business records. Products, categories, inventory movements, sales, payments, BIR settings, invoice sequences, refunds/reversals, daily closings, users, printer settings, and audit history are separated by `account_id`.
+
+Full database backups may contain records from multiple businesses and are therefore restricted to the platform owner. Business administrators can still export reports and audit history for their own account.
+
 ### BIR readiness before live issuance
 
 Before enabling live invoice issuance against the production database, run:
@@ -120,13 +138,16 @@ Complete `docs/BIR_FINAL_ACCEPTANCE.md`, retain the evidence pack, and obtain th
 Confirm the following on the final HTTPS production URL:
 
 1. Landing page and login load without mixed-content or redirect errors.
-2. Admin and Cashier authentication works.
-3. Dashboard local date/time is correct for `Asia/Manila`.
-4. Products, Inventory, POS, Discounts, and Cash/GCash/Card/Other payments work.
-5. One controlled test sale creates the correct receipt, stock movement, payment record, sales history, report totals, and audit log.
-6. `/up` returns a successful health response.
-7. `/manifest.webmanifest` and `/service-worker.js` are served over HTTPS.
-8. Installed PWA opens in standalone mode and the offline fallback does not expose authenticated business data.
+2. Public Create Account submission creates a pending business that cannot log in before approval.
+3. Platform owner can approve the pending business, after which its owner/admin can log in.
+4. A business account cannot see another account's products, users, sales, reports, receipts, or audit records.
+5. Admin and Cashier authentication works inside the approved business account.
+6. Dashboard local date/time is correct for `Asia/Manila`.
+7. Products, Inventory, POS, Discounts, and Cash/GCash/Card/Other payments work.
+8. One controlled test sale creates the correct receipt, stock movement, payment record, sales history, report totals, and audit log.
+9. `/up` returns a successful health response.
+10. `/manifest.webmanifest` and `/service-worker.js` are served over HTTPS.
+11. Installed PWA opens in standalone mode and the offline fallback does not expose authenticated business data.
 
 For the controlled sale, use a test product/account and reverse or otherwise reconcile the test transaction according to the site's operational procedure; do not directly edit completed financial records in the database.
 

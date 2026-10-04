@@ -46,6 +46,10 @@ class UserManagement extends Component
     {
         $user = User::query()->findOrFail($userId);
 
+        if ($user->isPlatformOwner() && ! auth()->user()->isPlatformOwner()) {
+            abort(403);
+        }
+
         $this->editingId = $user->id;
         $this->name = $user->name;
         $this->email = $user->email;
@@ -80,6 +84,10 @@ class UserManagement extends Component
 
         if ($this->editingId !== null) {
             $user = User::query()->findOrFail($this->editingId);
+
+            if ($user->isPlatformOwner() && ! auth()->user()->isPlatformOwner()) {
+                abort(403);
+            }
 
             if ($user->id === auth()->id() && $validated['status'] === User::STATUS_INACTIVE) {
                 $this->addError('status', 'You cannot deactivate your own account.');
@@ -130,6 +138,7 @@ class UserManagement extends Component
             session()->flash('success', 'User updated successfully.');
         } else {
             $user = new User();
+            $user->account_id = auth()->user()->account_id;
             $user->name = trim($validated['name']);
             $user->email = trim($validated['email']);
             $user->password = Hash::make($validated['password']);

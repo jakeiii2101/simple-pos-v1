@@ -38,6 +38,7 @@ class DashboardOverview extends Component
 
         $itemsSoldToday = (int) DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.account_id', auth()->user()->account_id)
             ->where('sales.status', Sale::STATUS_COMPLETED)
             ->leftJoin('sale_adjustments', 'sale_adjustments.sale_id', '=', 'sales.id')
             ->whereNull('sale_adjustments.id')
@@ -60,6 +61,7 @@ class DashboardOverview extends Component
 
         $topProductsToday = DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.account_id', auth()->user()->account_id)
             ->where('sales.status', Sale::STATUS_COMPLETED)
             ->leftJoin('sale_adjustments', 'sale_adjustments.sale_id', '=', 'sales.id')
             ->whereNull('sale_adjustments.id')

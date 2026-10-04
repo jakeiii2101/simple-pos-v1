@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToAccount;
+
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +12,7 @@ use LogicException;
 #[Fillable(['sale_refund_id', 'sale_item_id', 'quantity', 'gross_amount', 'discount_amount', 'vat_exemption_amount', 'vat_amount', 'refund_amount'])]
 class SaleRefundItem extends Model
 {
+    use BelongsToAccount;
     public function refund(): BelongsTo
     {
         return $this->belongsTo(SaleRefund::class, 'sale_refund_id');

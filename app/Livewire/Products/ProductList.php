@@ -197,9 +197,9 @@ class ProductList extends Component
     public function save(): void
     {
         $rules = [
-            'categoryId' => ['required', 'integer', Rule::exists('categories', 'id')->where('status', Category::STATUS_ACTIVE)],
-            'sku' => ['required', 'string', 'max:100', Rule::unique('products', 'sku')->ignore($this->editingId)],
-            'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->ignore($this->editingId)],
+            'categoryId' => ['required', 'integer', Rule::exists('categories', 'id')->where(fn ($query) => $query->where('status', Category::STATUS_ACTIVE)->where('account_id', auth()->user()->account_id))],
+            'sku' => ['required', 'string', 'max:100', Rule::unique('products', 'sku')->where(fn ($query) => $query->where('account_id', auth()->user()->account_id))->ignore($this->editingId)],
+            'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->where(fn ($query) => $query->where('account_id', auth()->user()->account_id))->ignore($this->editingId)],
             'name' => ['required', 'string', 'max:150'],
             'costPrice' => ['required', 'numeric', 'min:0'],
             'sellingPrice' => ['required', 'numeric', 'min:0'],

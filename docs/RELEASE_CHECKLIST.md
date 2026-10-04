@@ -14,6 +14,13 @@ This checklist is the final gate before tagging the Web/PWA release candidate an
 
 ## Functional regression
 
+- [ ] Public Create Account creates a pending business account and pending owner/admin.
+- [ ] Pending, rejected, and suspended business accounts cannot enter the POS workspace.
+- [ ] Only the CLI-designated platform owner can access Account Approvals.
+- [ ] Platform owner can approve, reject, suspend, and reactivate business accounts.
+- [ ] Approved business owner/admin can log in.
+- [ ] Products, categories, users, sales, payments, reports, receipts, BIR configuration, printer settings, and audit history are isolated between business accounts.
+- [ ] Full database backup creation/download is restricted to the platform owner.
 - [ ] Admin login/logout works.
 - [ ] Cashier login/logout works.
 - [ ] Inactive users cannot authenticate or use protected pages.
@@ -65,6 +72,8 @@ Before public deployment, the production environment must use a stable HTTPS dom
 - [ ] `SESSION_SAME_SITE=lax`
 - [ ] HTTPS certificate is valid and redirects HTTP to HTTPS.
 - [ ] Scheduler/queue configuration reviewed if enabled.
+- [ ] `php artisan platform:owner <trusted-owner-email>` has been run after the tenancy migration.
+- [ ] Account Approvals is visible only to the intended platform owner.
 - [ ] Backup and restore procedure tested.
 - [ ] No passwords, DB credentials, APP_KEY, payment secrets, or other production secrets are committed to Git.
 

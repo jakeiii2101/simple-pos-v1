@@ -6,6 +6,7 @@ use App\Livewire\Audit\AuditLogList;
 use App\Livewire\Categories\CategoryList;
 use App\Livewire\Dashboard\DashboardOverview;
 use App\Livewire\Inventory\InventoryList;
+use App\Livewire\Platform\AccountApprovals;
 use App\Livewire\Pos\SaleTerminal;
 use App\Livewire\Products\ProductList;
 use App\Livewire\Reports\DailyReadings;
@@ -23,14 +24,14 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'welcome');
 
 Route::get('dashboard', DashboardOverview::class)
-    ->middleware(['auth', 'active', 'verified'])
+    ->middleware(['auth', 'active', 'account.active', 'verified'])
     ->name('dashboard');
 
 Route::view('profile', 'profile')
-    ->middleware(['auth', 'active'])
+    ->middleware(['auth', 'active', 'account.active'])
     ->name('profile');
 
-Route::middleware(['auth', 'active', 'role:admin,cashier'])->group(function () {
+Route::middleware(['auth', 'active', 'account.active', 'role:admin,cashier'])->group(function () {
     Route::get('pos', SaleTerminal::class)->name('pos');
 
     Route::get('sales/{sale}/invoice', function (Sale $sale) {
@@ -44,7 +45,7 @@ Route::middleware(['auth', 'active', 'role:admin,cashier'])->group(function () {
     Route::get('sales/{sale}/receipt', fn (Sale $sale) => redirect()->route('sales.invoice', $sale));
 });
 
-Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'active', 'account.active', 'role:admin'])->group(function () {
     Route::get('categories', CategoryList::class)->name('categories');
     Route::get('products', ProductList::class)->name('products');
     Route::get('inventory', InventoryList::class)->name('inventory');
@@ -72,8 +73,12 @@ Route::middleware(['auth', 'active', 'role:admin'])->group(function () {
     Route::get('settings/bir', BirSettings::class)->name('settings.bir');
     Route::get('settings/printer', PrinterSettings::class)->name('settings.printer');
     Route::get('settings/readiness', SystemReadiness::class)->name('settings.readiness');
-    Route::get('compliance/backups/{filename}', [ComplianceFilesController::class, 'backup'])->name('compliance.backup');
     Route::get('compliance/audit-export', [ComplianceFilesController::class, 'audit'])->name('compliance.audit');
+});
+
+Route::middleware(['auth', 'active', 'platform_owner'])->group(function () {
+    Route::get('platform/accounts', AccountApprovals::class)->name('platform.accounts');
+    Route::get('compliance/backups/{filename}', [ComplianceFilesController::class, 'backup'])->name('compliance.backup');
 });
 
 require __DIR__.'/auth.php';
