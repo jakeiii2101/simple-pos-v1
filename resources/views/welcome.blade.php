@@ -95,7 +95,7 @@
                     <a href="{{ route('dashboard') }}" class="hidden rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-[#0F2747] transition hover:border-[#0F2747] sm:inline-flex">Dashboard</a>
                     <a href="{{ route('pos') }}" class="red-shadow rounded-xl bg-[#E50914] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#c90812] sm:px-7">Open POS</a>
                 @else
-                    <a href="{{ route('account.request') }}" class="hidden px-4 py-3 text-sm font-semibold text-[#0F2747] transition hover:text-[#E50914] sm:inline-flex">Log In</a>
+                    <a href="{{ route('login') }}" class="hidden px-4 py-3 text-sm font-semibold text-[#0F2747] transition hover:text-[#E50914] sm:inline-flex">Log In</a>
                     <a href="{{ route('account.request') }}" class="red-shadow rounded-xl bg-[#E50914] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#c90812] sm:px-7">Create Account</a>
                 @endauth
             </div>
