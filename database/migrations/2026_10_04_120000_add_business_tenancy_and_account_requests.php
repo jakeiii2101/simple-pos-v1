@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('business_name', 200);
             $table->string('owner_name', 150);
             $table->string('email', 255)->index();
-            $table->string('password_hash');
+            $table->string('password_hash')->nullable();
             $table->string('status', 20)->default('pending')->index();
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('approved_at')->nullable();
