@@ -26,17 +26,26 @@ class Account extends Model
 
     public function owner(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'owner_user_id')->withoutGlobalScope('account');
+        $relation = $this->belongsTo(User::class, 'owner_user_id');
+        $relation->getQuery()->withoutGlobalScope('account');
+
+        return $relation;
     }
 
     public function approver(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approved_by')->withoutGlobalScope('account');
+        $relation = $this->belongsTo(User::class, 'approved_by');
+        $relation->getQuery()->withoutGlobalScope('account');
+
+        return $relation;
     }
 
     public function users(): HasMany
     {
-        return $this->hasMany(User::class)->withoutGlobalScope('account');
+        $relation = $this->hasMany(User::class);
+        $relation->getQuery()->withoutGlobalScope('account');
+
+        return $relation;
     }
 
     public function isActive(): bool
