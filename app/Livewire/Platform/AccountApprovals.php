@@ -73,6 +73,7 @@ class AccountApprovals extends Component
             ]);
 
             $request->update([
+                'password_hash' => null,
                 'status' => AccountRequest::STATUS_APPROVED,
                 'approved_by' => auth()->id(),
                 'approved_at' => now(),
@@ -125,6 +126,7 @@ class AccountApprovals extends Component
             }
 
             $request->update([
+                'password_hash' => null,
                 'status' => AccountRequest::STATUS_REJECTED,
                 'rejected_at' => now(),
                 'rejection_reason' => trim($validated['rejectionReason']),
