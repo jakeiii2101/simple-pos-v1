@@ -43,9 +43,12 @@ class SystemReadinessService
             }
         }
 
-        $backupFiles = collect(Storage::disk('local')->files('backups'))
-            ->reject(fn (string $file): bool => str_ends_with($file, '.sha256'))
-            ->sortByDesc(fn (string $file): int => Storage::disk('local')->lastModified($file));
+        $canManageFullDatabaseBackups = auth()->user()?->isPlatformOwner() === true;
+        $backupFiles = $canManageFullDatabaseBackups
+            ? collect(Storage::disk('local')->files('backups'))
+                ->reject(fn (string $file): bool => str_ends_with($file, '.sha256'))
+                ->sortByDesc(fn (string $file): int => Storage::disk('local')->lastModified($file))
+            : collect();
         $latestBackup = $backupFiles->first();
 
         $birSetting = BirSetting::query()->where('is_active', true)->first();
@@ -75,8 +78,10 @@ class SystemReadinessService
             $this->check('bir_identity', 'Registered taxpayer identity', $birSetting !== null && filled($birSetting->registered_name) && filled($birSetting->tin) && filled($birSetting->registered_address) && filled($birSetting->rdo_code), 'Complete and activate BIR Settings.'),
             $this->check('invoice_sequence', 'Invoice sequence', $sequence !== null && ! ($sequence !== null && $numbers !== [] && max($numbers) > $sequence->current_number), 'Configure or correct the active Sales Invoice sequence.'),
             $this->check('invoice_integrity', 'Invoice integrity', $missing === [] && $malformed === [], 'Investigate gaps or malformed invoice numbers; never reuse a number.'),
-            $this->check('verified_backup', 'Verified private backup', $latestBackupChecksumValid, 'Create a new backup and verify its SHA-256 checksum.'),
-            $this->check('fresh_backup', 'Backup freshness', $latestBackupAgeHours !== null && $latestBackupAgeHours <= 24, 'Create a backup within 24 hours of production release.', 'warning'),
+            ...($canManageFullDatabaseBackups ? [
+                $this->check('verified_backup', 'Verified private backup', $latestBackupChecksumValid, 'Create a new backup and verify its SHA-256 checksum.'),
+                $this->check('fresh_backup', 'Backup freshness', $latestBackupAgeHours !== null && $latestBackupAgeHours <= 24, 'Create a backup within 24 hours of production release.', 'warning'),
+            ] : []),
             $this->check('permit_reference', 'BIR permit/reference', $birSetting !== null && filled($birSetting->permit_number) && $birSetting->permit_date !== null, 'Record the final RDO-approved permit/reference before live issuance.', 'warning'),
             $this->check('production_environment', 'Production HTTPS and session security', $productionEnvironmentReady, 'Set APP_DEBUG=false, an HTTPS APP_URL, and SESSION_SECURE_COOKIE=true.'),
         ];
@@ -99,6 +104,7 @@ class SystemReadinessService
             'backup_count' => $backupFiles->count(),
             'latest_backup_checksum_valid' => $latestBackupChecksumValid,
             'latest_backup_age_hours' => $latestBackupAgeHours,
+            'can_manage_full_database_backups' => $canManageFullDatabaseBackups,
             'checks' => $checks,
             'blocking_failures' => $blockingFailures,
             'warning_failures' => collect($checks)->where('severity', 'warning')->where('passed', false)->count(),
