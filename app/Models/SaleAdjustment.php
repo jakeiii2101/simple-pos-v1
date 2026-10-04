@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToAccount;
+
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +20,7 @@ use LogicException;
 ])]
 class SaleAdjustment extends Model
 {
+    use BelongsToAccount;
     public const TYPE_VOID = 'void';
 
     public const TYPE_REFUND = 'refund';
