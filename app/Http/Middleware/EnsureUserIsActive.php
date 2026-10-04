@@ -16,6 +16,10 @@ class EnsureUserIsActive
             abort(403);
         }
 
+        if ($user->business !== null && ! $user->business->isActive()) {
+            abort(403, 'This business workspace is currently suspended.');
+        }
+
         return $next($request);
     }
 }
