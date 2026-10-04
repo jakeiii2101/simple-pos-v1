@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Models\Account;
+use App\Support\AccountContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
@@ -20,8 +21,14 @@ trait BelongsToAccount
         });
 
         static::creating(function ($model): void {
-            if ($model->account_id === null && Auth::user()?->account_id !== null) {
-                $model->account_id = Auth::user()->account_id;
+            if ($model->account_id !== null) {
+                return;
+            }
+
+            $accountId = Auth::user()?->account_id ?? app(AccountContext::class)->id();
+
+            if ($accountId !== null) {
+                $model->account_id = $accountId;
             }
         });
     }
