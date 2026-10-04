@@ -73,12 +73,12 @@ Route::middleware(['auth', 'active', 'account.active', 'role:admin'])->group(fun
     Route::get('settings/bir', BirSettings::class)->name('settings.bir');
     Route::get('settings/printer', PrinterSettings::class)->name('settings.printer');
     Route::get('settings/readiness', SystemReadiness::class)->name('settings.readiness');
-    Route::get('compliance/backups/{filename}', [ComplianceFilesController::class, 'backup'])->name('compliance.backup');
     Route::get('compliance/audit-export', [ComplianceFilesController::class, 'audit'])->name('compliance.audit');
 });
 
 Route::middleware(['auth', 'active', 'platform_owner'])->group(function () {
     Route::get('platform/accounts', AccountApprovals::class)->name('platform.accounts');
+    Route::get('compliance/backups/{filename}', [ComplianceFilesController::class, 'backup'])->name('compliance.backup');
 });
 
 require __DIR__.'/auth.php';
