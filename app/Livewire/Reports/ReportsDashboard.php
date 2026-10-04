@@ -133,6 +133,7 @@ class ReportsDashboard extends Component
         $month = $this->safeMonth();
         $monthStart = $month->copy()->startOfMonth();
         $monthEnd = $month->copy()->endOfMonth();
+        $businessId = auth()->user()->business_id;
 
         $daily = Sale::query()
             ->where('status', Sale::STATUS_COMPLETED)
@@ -179,6 +180,7 @@ class ReportsDashboard extends Component
 
         $topProducts = DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.business_id', $businessId)
             ->where('sales.status', Sale::STATUS_COMPLETED)
             ->leftJoin('sale_adjustments', 'sale_adjustments.sale_id', '=', 'sales.id')
             ->whereNull('sale_adjustments.id')
@@ -197,6 +199,8 @@ class ReportsDashboard extends Component
         $returnedProducts = DB::table('sale_refund_items')
             ->join('sale_refunds', 'sale_refunds.id', '=', 'sale_refund_items.sale_refund_id')
             ->join('sale_items', 'sale_items.id', '=', 'sale_refund_items.sale_item_id')
+            ->where('sale_refunds.business_id', $businessId)
+            ->where('sale_refunds.business_id', $businessId)
             ->whereBetween('sale_refunds.processed_at', [$monthStart, $monthEnd])
             ->select('sale_items.product_name', 'sale_items.sku')
             ->selectRaw('SUM(sale_refund_items.quantity) as quantity_returned, SUM(sale_refund_items.gross_amount) as gross_returned')
@@ -211,6 +215,7 @@ class ReportsDashboard extends Component
 
         $paymentBreakdown = DB::table('sales')
             ->leftJoin('payments', 'payments.sale_id', '=', 'sales.id')
+            ->where('sales.business_id', $businessId)
             ->where('sales.status', Sale::STATUS_COMPLETED)
             ->leftJoin('sale_adjustments', 'sale_adjustments.sale_id', '=', 'sales.id')
             ->whereNull('sale_adjustments.id')
@@ -223,6 +228,7 @@ class ReportsDashboard extends Component
         $refundsByPaymentMethod = DB::table('sale_refunds')
             ->join('sales', 'sales.id', '=', 'sale_refunds.sale_id')
             ->leftJoin('payments', 'payments.sale_id', '=', 'sales.id')
+            ->where('sale_refunds.business_id', $businessId)
             ->whereBetween('sale_refunds.processed_at', [$monthStart, $monthEnd])
             ->selectRaw("COALESCE(payments.method, 'cash') as method, COALESCE(SUM(sale_refunds.refund_amount), 0) as refund_amount")
             ->groupBy(DB::raw("COALESCE(payments.method, 'cash')"))

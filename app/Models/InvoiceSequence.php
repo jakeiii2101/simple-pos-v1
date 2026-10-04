@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,6 +17,8 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class InvoiceSequence extends Model
 {
+    use BelongsToBusiness;
+
     public const TYPE_SALES_INVOICE = 'sales_invoice';
 
     protected function casts(): array

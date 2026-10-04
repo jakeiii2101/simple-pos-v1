@@ -44,7 +44,7 @@ class UserManagement extends Component
 
     public function edit(int $userId): void
     {
-        $user = User::query()->findOrFail($userId);
+        $user = $this->userQuery()->findOrFail($userId);
 
         $this->editingId = $user->id;
         $this->name = $user->name;
@@ -79,7 +79,11 @@ class UserManagement extends Component
         ]);
 
         if ($this->editingId !== null) {
-            $user = User::query()->findOrFail($this->editingId);
+            $user = $this->userQuery()->findOrFail($this->editingId);
+
+            if ($user->isPlatformOwner() && ! auth()->user()->isPlatformOwner()) {
+                abort(403);
+            }
 
             if ($user->id === auth()->id() && $validated['status'] === User::STATUS_INACTIVE) {
                 $this->addError('status', 'You cannot deactivate your own account.');
@@ -130,6 +134,7 @@ class UserManagement extends Component
             session()->flash('success', 'User updated successfully.');
         } else {
             $user = new User();
+            $user->business_id = auth()->user()->business_id;
             $user->name = trim($validated['name']);
             $user->email = trim($validated['email']);
             $user->password = Hash::make($validated['password']);
@@ -163,7 +168,7 @@ class UserManagement extends Component
             return false;
         }
 
-        return User::query()
+        return $this->userQuery()
             ->where('role', User::ROLE_ADMIN)
             ->where('status', User::STATUS_ACTIVE)
             ->count() <= 1;
@@ -190,7 +195,12 @@ class UserManagement extends Component
     public function render()
     {
         return view('livewire.users.user-management', [
-            'users' => User::query()->orderBy('name')->get(),
+            'users' => $this->userQuery()->orderBy('name')->get(),
         ]);
+    }
+
+    private function userQuery()
+    {
+        return User::query()->where('business_id', auth()->user()->business_id);
     }
 }

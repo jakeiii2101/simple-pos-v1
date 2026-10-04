@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,6 +22,8 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class BirSetting extends Model
 {
+    use BelongsToBusiness;
+
     public const TAX_TYPE_VAT = 'vat';
 
     public const TAX_TYPE_NON_VAT = 'non_vat';

@@ -49,7 +49,9 @@ class CategoryList extends Component
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('categories', 'name')->ignore($this->editingId),
+                Rule::unique('categories', 'name')
+                    ->where(fn ($query) => $query->where('business_id', auth()->user()->business_id))
+                    ->ignore($this->editingId),
             ],
             'description' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::in([

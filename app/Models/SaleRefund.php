@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,8 @@ use LogicException;
 #[Fillable(['refund_number', 'sale_id', 'authorized_by', 'gross_amount', 'discount_amount', 'vat_exemption_amount', 'vatable_sales', 'vat_amount', 'vat_exempt_sales', 'zero_rated_sales', 'non_vat_sales', 'refund_amount', 'reason', 'inventory_restocked', 'processed_at'])]
 class SaleRefund extends Model
 {
+    use BelongsToBusiness;
+
     public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);

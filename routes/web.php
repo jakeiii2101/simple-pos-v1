@@ -6,6 +6,7 @@ use App\Livewire\Audit\AuditLogList;
 use App\Livewire\Categories\CategoryList;
 use App\Livewire\Dashboard\DashboardOverview;
 use App\Livewire\Inventory\InventoryList;
+use App\Livewire\Platform\AccountApprovals;
 use App\Livewire\Pos\SaleTerminal;
 use App\Livewire\Products\ProductList;
 use App\Livewire\Reports\DailyReadings;
@@ -42,6 +43,10 @@ Route::middleware(['auth', 'active', 'role:admin,cashier'])->group(function () {
     })->name('sales.invoice');
 
     Route::get('sales/{sale}/receipt', fn (Sale $sale) => redirect()->route('sales.invoice', $sale));
+});
+
+Route::middleware(['auth', 'active', 'platform-owner'])->group(function () {
+    Route::get('platform/account-approvals', AccountApprovals::class)->name('platform.account-approvals');
 });
 
 Route::middleware(['auth', 'active', 'role:admin'])->group(function () {

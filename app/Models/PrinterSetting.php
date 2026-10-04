@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
+    'business_id',
     'paper_width_mm',
     'content_padding_mm',
     'font_size_px',
@@ -13,6 +15,8 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class PrinterSetting extends Model
 {
+    use BelongsToBusiness;
+
     public const DEFAULT_PAPER_WIDTH_MM = 80;
 
     public const DEFAULT_CONTENT_PADDING_MM = 4;

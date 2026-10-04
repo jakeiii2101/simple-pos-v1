@@ -45,6 +45,16 @@ class LoginForm extends Form
             ]);
         }
 
+        $user = Auth::user();
+
+        if ($user?->business !== null && ! $user->business->isActive()) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'form.email' => 'This business workspace is currently unavailable. Contact SniperPOS support.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
