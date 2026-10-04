@@ -34,6 +34,11 @@ class CreateAccount extends Component
 
     public function submit(): void
     {
+        $this->email = Str::lower(trim($this->email));
+        $this->businessName = trim($this->businessName);
+        $this->ownerName = trim($this->ownerName);
+        $this->phone = trim($this->phone);
+
         $this->ensureNotRateLimited();
 
         $validated = $this->validate([
