@@ -61,9 +61,9 @@ class ProductBulkImporter
             ];
 
             $validator = Validator::make($payload, [
-                'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->where('status', Category::STATUS_ACTIVE)],
-                'sku' => ['required', 'string', 'max:100', Rule::unique('products', 'sku')],
-                'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')],
+                'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->where(fn ($query) => $query->where('status', Category::STATUS_ACTIVE)->where('account_id', auth()->user()->account_id))],
+                'sku' => ['required', 'string', 'max:100', Rule::unique('products', 'sku')->where(fn ($query) => $query->where('account_id', auth()->user()->account_id))],
+                'barcode' => ['nullable', 'string', 'max:100', Rule::unique('products', 'barcode')->where(fn ($query) => $query->where('account_id', auth()->user()->account_id))],
                 'name' => ['required', 'string', 'max:150'],
                 'cost_price' => ['required', 'numeric', 'min:0'],
                 'selling_price' => ['required', 'numeric', 'min:0'],
