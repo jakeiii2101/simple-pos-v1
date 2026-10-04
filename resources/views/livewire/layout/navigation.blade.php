@@ -54,6 +54,10 @@ new class extends Component
                         ['route' => 'settings.readiness', 'label' => 'System Readiness', 'icon' => 'audit'],
                     ]);
                 }
+
+                if (auth()->user()->isPlatformOwner()) {
+                    $items[] = ['route' => 'platform.accounts', 'label' => 'Account Approvals', 'icon' => 'platform'];
+                }
             @endphp
 
             @foreach ($items as $item)
@@ -96,6 +100,9 @@ new class extends Component
                             @case('printer')
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/><path d="M17 11h.01"/></svg>
                                 @break
+                            @case('platform')
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 20 7v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4Z"/><path d="M9 12h6M12 9v6"/></svg>
+                                @break
                             @default
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>
                         @endswitch
@@ -111,6 +118,9 @@ new class extends Component
                 <div class="min-w-0">
                     <div class="truncate text-sm font-semibold text-white" x-data="{{ json_encode(['name' => auth()->user()->name]) }}" x-text="name" x-on:profile-updated.window="name = $event.detail.name"></div>
                     <div class="truncate text-xs text-slate-400">{{ auth()->user()->email }}</div>
+                    @if (auth()->user()->account)
+                        <div class="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ auth()->user()->account->name }}</div>
+                    @endif
                 </div>
             </div>
 
