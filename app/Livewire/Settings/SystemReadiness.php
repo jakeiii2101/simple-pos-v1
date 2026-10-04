@@ -21,6 +21,8 @@ class SystemReadiness extends Component
 
     public function createBackup(DatabaseBackupService $service): void
     {
+        abort_unless(auth()->user()?->isPlatformOwner(), 403);
+
         $this->validate([
             'authorizationPassword' => ['required', 'current_password'],
         ], ['authorizationPassword.current_password' => 'The administrator password is incorrect.']);
